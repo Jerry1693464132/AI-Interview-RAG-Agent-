@@ -2,136 +2,265 @@
   {
     "category": "backend",
     "difficulty": "medium",
-    "question_type": "technical",
+    "question_type": "knowledge",
     "content": "Python 中 GIL 是什么？对多线程编程有什么影响？如何绕过 GIL 限制？",
-    "tags": ["Python", "并发"],
+    "tags": [
+      "Python",
+      "并发"
+    ],
     "reference_answer": "GIL 是 CPython 的全局解释器锁，同一时刻只有一个线程执行 Python 字节码。IO 密集型可用多线程，CPU 密集型用 multiprocessing 或 C 扩展。",
-    "key_points": ["GIL定义", "多线程限制", "multiprocessing", "C扩展", "异步IO"]
+    "key_points": [
+      "GIL定义",
+      "多线程限制",
+      "multiprocessing",
+      "C扩展",
+      "异步IO"
+    ]
   },
   {
     "category": "backend",
     "difficulty": "medium",
-    "question_type": "technical",
+    "question_type": "knowledge",
     "content": "Python 装饰器的执行顺序是怎样的？多个装饰器叠加时如何工作？",
-    "tags": ["Python", "decorator"],
+    "tags": [
+      "Python",
+      "decorator"
+    ],
     "reference_answer": "装饰器从下往上执行，最靠近函数的先应用。本质是语法糖。",
-    "key_points": ["执行顺序", "语法糖本质", "闭包", "functools.wraps"]
+    "key_points": [
+      "执行顺序",
+      "语法糖本质",
+      "闭包",
+      "functools.wraps"
+    ]
   },
   {
     "category": "backend",
     "difficulty": "hard",
-    "question_type": "technical",
+    "question_type": "knowledge",
     "content": "解释 Python 中 async/await 的工作原理，事件循环是如何调度协程的？",
-    "tags": ["Python", "async"],
+    "tags": [
+      "Python",
+      "async"
+    ],
     "reference_answer": "基于协程和事件循环，协程在 await 处挂起并让出控制权，事件循环维护就绪队列轮询 IO 事件。",
-    "key_points": ["协程概念", "事件循环", "await挂起", "IO多路复用", "uvloop"]
+    "key_points": [
+      "协程概念",
+      "事件循环",
+      "await挂起",
+      "IO多路复用",
+      "uvloop"
+    ]
   },
   {
     "category": "backend",
     "difficulty": "hard",
-    "question_type": "technical",
+    "question_type": "knowledge",
     "content": "Python 内存管理机制：引用计数、垃圾回收、内存池",
-    "tags": ["Python", "内存"],
+    "tags": [
+      "Python",
+      "内存"
+    ],
     "reference_answer": "引用计数 + 标记清除 + 分代回收。小对象用内存池，大对象直接malloc。",
-    "key_points": ["引用计数", "标记清除", "分代回收", "pymalloc", "循环引用"]
+    "key_points": [
+      "引用计数",
+      "标记清除",
+      "分代回收",
+      "pymalloc",
+      "循环引用"
+    ]
   },
   {
     "category": "backend",
     "difficulty": "medium",
-    "question_type": "technical",
+    "question_type": "knowledge",
     "content": "PostgreSQL 中如何优化慢查询？请描述你的排查思路和常用优化手段",
-    "tags": ["PostgreSQL", "优化"],
+    "tags": [
+      "PostgreSQL",
+      "优化"
+    ],
     "reference_answer": "EXPLAIN ANALYZE 分析执行计划，关注 Seq Scan 和 Index Scan。优化：创建索引、调整 work_mem、分区表。",
-    "key_points": ["EXPLAIN ANALYZE", "索引策略", "work_mem", "分区", "锁分析"]
+    "key_points": [
+      "EXPLAIN ANALYZE",
+      "索引策略",
+      "work_mem",
+      "分区",
+      "锁分析"
+    ]
   },
   {
     "category": "backend",
     "difficulty": "medium",
-    "question_type": "technical",
+    "question_type": "knowledge",
     "content": "数据库事务隔离级别有哪些？分别解释脏读、不可重复读、幻读",
-    "tags": ["数据库", "事务"],
+    "tags": [
+      "数据库",
+      "事务"
+    ],
     "reference_answer": "Read Uncommitted/Committed/Repeatable Read/Serializable 四种级别。通过 MVCC 实现。",
-    "key_points": ["四种隔离级别", "脏读", "不可重复读", "幻读", "MVCC"]
+    "key_points": [
+      "四种隔离级别",
+      "脏读",
+      "不可重复读",
+      "幻读",
+      "MVCC"
+    ]
   },
   {
     "category": "backend",
     "difficulty": "easy",
-    "question_type": "technical",
+    "question_type": "knowledge",
     "content": "Redis 常用的数据结构有哪些？各自适用什么场景？",
-    "tags": ["Redis", "缓存"],
+    "tags": [
+      "Redis",
+      "缓存"
+    ],
     "reference_answer": "String/Hash/List/Set/ZSet/Stream/Geo 等，各有适用场景。",
-    "key_points": ["5种基本类型", "使用场景", "时间复杂度", "底层实现"]
+    "key_points": [
+      "5种基本类型",
+      "使用场景",
+      "时间复杂度",
+      "底层实现"
+    ]
   },
   {
     "category": "backend",
     "difficulty": "medium",
-    "question_type": "technical",
+    "question_type": "knowledge",
     "content": "什么是缓存穿透、缓存击穿、缓存雪崩？分别如何解决？",
-    "tags": ["Redis", "高并发"],
+    "tags": [
+      "Redis",
+      "高并发"
+    ],
     "reference_answer": "穿透查不存在的数据→布隆过滤器。击穿热点key过期→互斥锁。雪崩大量key同时过期→随机TTL。",
-    "key_points": ["穿透+布隆过滤器", "击穿+互斥锁", "雪崩+随机TTL", "多级缓存"]
+    "key_points": [
+      "穿透+布隆过滤器",
+      "击穿+互斥锁",
+      "雪崩+随机TTL",
+      "多级缓存"
+    ]
   },
   {
     "category": "backend",
     "difficulty": "hard",
-    "question_type": "system_design",
+    "question_type": "practice",
     "content": "设计一个短链接系统（如 TinyURL），要求支持高并发读写",
-    "tags": ["系统设计", "分布式"],
+    "tags": [
+      "系统设计",
+      "分布式"
+    ],
     "reference_answer": "核心：发号器 + 缓存 + 数据库。发号器可用 Snowflake，缓存用 Redis，数据库分库分表。",
-    "key_points": ["Base62编码", "发号器设计", "缓存策略", "分库分表", "CDN加速"]
+    "key_points": [
+      "Base62编码",
+      "发号器设计",
+      "缓存策略",
+      "分库分表",
+      "CDN加速"
+    ]
   },
   {
     "category": "backend",
     "difficulty": "hard",
-    "question_type": "system_design",
+    "question_type": "practice",
     "content": "设计一个实时消息推送系统，支持百万级在线用户",
-    "tags": ["系统设计", "WebSocket"],
+    "tags": [
+      "系统设计",
+      "WebSocket"
+    ],
     "reference_answer": "WebSocket 长连接 + Kafka 消息队列 + 推送网关集群。连接管理用一致性哈希。",
-    "key_points": ["WebSocket", "连接管理", "消息路由", "水平扩展", "心跳机制"]
+    "key_points": [
+      "WebSocket",
+      "连接管理",
+      "消息路由",
+      "水平扩展",
+      "心跳机制"
+    ]
   },
   {
     "category": "general",
     "difficulty": "medium",
-    "question_type": "behavioral",
+    "question_type": "soft_skill",
     "content": "描述一次你主导的技术方案从提出到落地的完整经历，遇到了什么困难？",
-    "tags": ["行为面试", "领导力"],
+    "tags": [
+      "行为面试",
+      "领导力"
+    ],
     "reference_answer": "考察方案设计、推动力和跨团队协作。使用 STAR 法则。",
-    "key_points": ["STAR法则", "技术判断", "推动能力", "协作", "量化结果"]
+    "key_points": [
+      "STAR法则",
+      "技术判断",
+      "推动能力",
+      "协作",
+      "量化结果"
+    ]
   },
   {
     "category": "general",
     "difficulty": "easy",
-    "question_type": "behavioral",
+    "question_type": "soft_skill",
     "content": "你是如何保持技术学习的？请举例说明你最近学习的一项新技术",
-    "tags": ["行为面试", "学习能力"],
+    "tags": [
+      "行为面试",
+      "学习能力"
+    ],
     "reference_answer": "考察学习能力和技术热情，应体现系统性方法而非被动消费。",
-    "key_points": ["学习方法", "实践驱动", "深度vs广度", "输出分享"]
+    "key_points": [
+      "学习方法",
+      "实践驱动",
+      "深度vs广度",
+      "输出分享"
+    ]
   },
   {
     "category": "devops",
     "difficulty": "easy",
-    "question_type": "technical",
+    "question_type": "knowledge",
     "content": "Docker 镜像优化有哪些常用手段？如何减小镜像体积？",
-    "tags": ["Docker", "DevOps"],
+    "tags": [
+      "Docker",
+      "DevOps"
+    ],
     "reference_answer": "多阶段构建、选择 alpine/slim 基础镜像、合并 RUN 指令、清理缓存。",
-    "key_points": ["多阶段构建", "基础镜像选择", "层优化", "缓存策略"]
+    "key_points": [
+      "多阶段构建",
+      "基础镜像选择",
+      "层优化",
+      "缓存策略"
+    ]
   },
   {
     "category": "devops",
     "difficulty": "hard",
-    "question_type": "technical",
+    "question_type": "knowledge",
     "content": "Kubernetes 中 Pod 的调度流程是怎样的？调度器如何选择节点？",
-    "tags": ["Kubernetes", "调度"],
+    "tags": [
+      "Kubernetes",
+      "调度"
+    ],
     "reference_answer": "过滤阶段（资源/端口/亲和性）→ 打分阶段。kube-scheduler 通过 informer 监听 API Server。",
-    "key_points": ["过滤+打分", "亲和性/反亲和性", "污点容忍", "资源预留"]
+    "key_points": [
+      "过滤+打分",
+      "亲和性/反亲和性",
+      "污点容忍",
+      "资源预留"
+    ]
   },
   {
     "category": "devops",
     "difficulty": "medium",
-    "question_type": "technical",
+    "question_type": "knowledge",
     "content": "请解释 CI/CD 流水线的核心环节，如何设计一个高效的 Pipeline",
-    "tags": ["CI/CD", "自动化"],
+    "tags": [
+      "CI/CD",
+      "自动化"
+    ],
     "reference_answer": "lint/test → 构建 → 镜像打包 → staging → 测试 → 生产。关键：并行化、缓存、分阶段发布。",
-    "key_points": ["lint+test", "构建缓存", "分阶段部署", "回滚策略", "GitOps"]
+    "key_points": [
+      "lint+test",
+      "构建缓存",
+      "分阶段部署",
+      "回滚策略",
+      "GitOps"
+    ]
   }
 ]

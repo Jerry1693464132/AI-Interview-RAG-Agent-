@@ -38,11 +38,9 @@ class QuestionGenerator:
 
     # 默认题型分布
     DEFAULT_TYPE_DISTRIBUTION = {
-        "technical": 0.4,
-        "coding": 0.15,
-        "system_design": 0.15,
-        "behavioral": 0.2,
-        "scenario": 0.1,
+        "knowledge": 0.5,   # 知识深度：原理、机制、底层实现
+        "practice": 0.35,   # 工程实践：设计、排查、架构决策
+        "soft_skill": 0.15, # 软技能：沟通、协作、学习
     }
 
     def __init__(
@@ -220,7 +218,7 @@ class QuestionGenerator:
             '- 以 JSON 格式输出: {"questions": [...]}\n'
             "每道题目包含:\n"
             "  - content: 题目内容\n"
-            "  - question_type: 题型 (technical/coding/system_design/behavioral/scenario)\n"
+            "  - question_type: 题型 (knowledge/practice/soft_skill)\n"
             "  - reference_answer: 参考答案（详细、准确）\n"
             "  - key_points: 关键考查点列表（3-7 个具体可量化的点）\n"
             "  - source_chunks: 引用的 RAG 内容片段索引（如无则为空数组）\n\n"

@@ -37,7 +37,7 @@ class QuestionBankCreateRequest(BaseModel):
     category: str = Field(default="general")
     subcategory: Optional[str] = None
     difficulty: str = Field(default="medium", pattern="^(easy|medium|hard)$")
-    question_type: str = Field(default="technical")
+    question_type: str = Field(default="knowledge")
     tags: list[str] = Field(default_factory=list)
     reference_answer: Optional[str] = None
     key_points: list[str] = Field(default_factory=list)
