@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 智能面试出题系统</title>
+<style>
+  :root {
+    --primary: #6366f1; --primary-dark: #4f46e5; --success: #10b981;
+    --warning: #f59e0b; --danger: #ef4444; --bg: #0f172a; --card: #1e293b;
+    --border: #334155; --text: #f1f5f9; --text-muted: #94a3b8; --radius: 12px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+  .app-header{background:linear-gradient(135deg,#1e1b4b,#312e81,#3730a3);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between}
+  .app-header .logo{font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 2s infinite;display:inline-block}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+  .container{max-width:1000px;margin:0 auto;padding:24px 32px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+  .card h2{font-size:18px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .card h3{font-size:15px;color:var(--text-muted);margin-bottom:12px}
+  .form-group{margin-bottom:14px}
+  .form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text-muted)}
+  .form-group input,.form-group textarea,.form-group select{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;transition:border-color .2s}
+  .form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+  .form-row{display:flex;gap:12px}.form-row .form-group{flex:1}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:all .2s;font-family:inherit}
+  .btn-primary{background:var(--primary);color:white}.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px)}
+  .btn-success{background:var(--success);color:white}
+  .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+  .btn-outline:hover{border-color:var(--primary)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn-sm{padding:6px 14px;font-size:12px}
+  .tag{display:inline-block;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;margin:2px}
+  .tag-skill{background:rgba(99,102,241,.2);color:#a5b4fc}
+  .tag-expert{background:rgba(16,185,129,.2);color:#34d399}
+  .tag-advanced{background:rgba(59,130,246,.2);color:#93c5fd}
+  .tag-mid{background:rgba(245,158,11,.2);color:#fcd34d}
+  .tag-novice{background:rgba(148,163,184,.2);color:#cbd5e1}
+  .hidden{display:none!important}
+  .mt-8{margin-top:8px}.mt-16{margin-top:16px}
+  .text-muted{color:var(--text-muted);font-size:13px}
+  .empty-state{text-align:center;padding:40px;color:var(--text-muted)}
+  .empty-state .icon{font-size:48px;margin-bottom:12px}
+  .file-upload{border:2px dashed var(--border);border-radius:var(--radius);padding:40px;text-align:center;cursor:pointer;transition:all .2s}
+  .file-upload:hover{border-color:var(--primary);background:rgba(99,102,241,.05)}
+  .file-upload .icon{font-size:40px;margin-bottom:8px}
+  .profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .profile-item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px}
+  .profile-item .label{font-size:11px;color:var(--text-muted);text-transform:uppercase}
+  .profile-item .value{font-size:16px;font-weight:700;margin-top:4px}
+  .question-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px}
+  .question-card .q-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .question-card .q-content{white-space:pre-wrap;margin-bottom:8px}
+  .steps{display:flex;gap:12px;margin-bottom:32px}
+  .step{flex:1;padding:14px 16px;border-radius:var(--radius);background:var(--card);border:2px solid var(--border);text-align:center;font-size:13px;font-weight:600;transition:all .2s}
+  .step .num{display:block;font-size:24px;margin-bottom:4px;color:var(--text-muted)}
+  .step.active{border-color:var(--primary);background:rgba(99,102,241,.1)}
+  .step.active .num{color:var(--primary)}
+  .step.done{border-color:var(--success);background:rgba(16,185,129,.1)}
+  .step.done .num{color:var(--success)}
+  .toast{position:fixed;top:20px;right:20px;padding:14px 20px;border-radius:10px;font-weight:600;font-size:14px;z-index:1000;animation:slideIn .3s ease;max-width:400px}
+  @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+  .toast.success{background:var(--success);color:white}
+  .toast.error{background:var(--danger);color:white}
+  .toast.info{background:var(--primary);color:white}
+  details summary{cursor:pointer;color:var(--primary);font-weight:600;margin-top:8px}
+  details .detail-box{margin-top:8px;background:var(--card);padding:12px;border-radius:8px;border:1px solid var(--border)}
+  .divider{border:0;border-top:1px solid var(--border);margin:16px 0}
+  @media(max-width:768px){.container{padding:16px}.form-row{flex-direction:column}.steps{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo"><span>🤖</span> AI 智能面试出题系统</div>
+  <span class="text-muted" style="font-size:13px"><span class="status-dot"></span> DeepSeek + Qwen3.7 驱动</span>
+</header>
+
+<div class="container">
+
+  <div class="steps" id="steps">
+    <div class="step active" data-step="1"><span class="num">1</span> 上传简历</div>
+    <div class="step" data-step="2"><span class="num">2</span> 设置岗位</div>
+    <div class="step" data-step="3"><span class="num">3</span> 生成题目</div>
+  </div>
+
+  <!-- Step 1: 上传简历 -->
+  <div class="card" id="card-upload">
+    <h2>📄 上传候选人简历</h2>
+    <p class="text-muted" style="margin-bottom:16px">支持 PDF / DOCX / TXT，上传后自动提取技能与画像</p>
+    <label class="file-upload" id="dropZone">
+      <div class="icon">📁</div>
+      <p style="font-weight:600">点击选择文件 或 拖拽到此处</p>
+      <p class="text-muted" style="margin-top:4px">支持 .pdf .docx .txt .md</p>
+    </label>
+    <input type="file" id="fileInput" accept=".pdf,.docx,.txt,.md" class="hidden" onchange="handleFile(this.files[0])">
+    <div id="uploadStatus" class="hidden mt-16"></div>
+    <button class="btn btn-outline btn-sm mt-16 hidden" id="btnReset" onclick="resetUpload()">🔄 重新上传</button>
+  </div>
+
+  <!-- Step 2: 设置岗位 -->
+  <div class="card" id="card-job" style="opacity:0.4;pointer-events:none">
+    <h2>🎯 面试岗位设置</h2>
+    <div class="form-row">
+      <div class="form-group"><label>目标岗位 *</label><input type="text" id="jobTitle" placeholder="如：高级 Python 后端工程师"></div>
+      <div class="form-group"><label>难度</label><select id="difficulty"><option value="easy">初级</option><option value="medium" selected>中级</option><option value="hard">高级</option></select></div>
+    </div>
+    <div class="form-group"><label>岗位描述</label><textarea id="jobDescription" rows="3" placeholder="如：负责微服务架构设计，要求熟悉 FastAPI、PostgreSQL、Docker、Kubernetes..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>题目数量</label><input type="number" id="questionCount" value="5" min="1" max="20"></div>
+      <div class="form-group"><label>题目类型</label><select id="questionTypes" multiple style="height:80px"><option value="technical" selected>技术基础</option><option value="coding">编程题</option><option value="system_design" selected>系统设计</option><option value="behavioral" selected>行为面试</option><option value="scenario">场景题</option></select></div>
+    </div>
+    <button class="btn btn-primary" id="btnGenerate" onclick="generateQuestions()" disabled>🤖 生成面试题目</button>
+  </div>
+
+  <!-- Step 3: 生成结果 -->
+  <div class="card hidden" id="card-result">
+    <h2>📝 生成的面试题目</h2>
+    <div id="resultContent"></div>
+  </div>
+
+  <!-- 题目管理 -->
+  <div class="card">
+    <h2>📋 历史面试 <button class="btn btn-outline btn-sm" onclick="loadHistory()" style="margin-left:12px">刷新</button></h2>
+    <div id="historyList"><div class="empty-state"><p>点击刷新加载历史记录</p></div></div>
+  </div>
+
+</div>
+
+<script>
+const API='';
+let currentResumeId=null, currentProfile=null;
+
+// Upload trigger
+document.getElementById('dropZone').addEventListener('click',()=>document.getElementById('fileInput').click());
+document.getElementById('dropZone').addEventListener('dragover',e=>{e.preventDefault();e.currentTarget.style.borderColor='var(--primary)'});
+document.getElementById('dropZone').addEventListener('dragleave',e=>{e.currentTarget.style.borderColor='var(--border)'});
+document.getElementById('dropZone').addEventListener('drop',e=>{e.preventDefault();e.currentTarget.style.borderColor='var(--border)';if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
+
+function toast(msg,type='success'){const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),4000)}
+function updateStep(n){document.querySelectorAll('.step').forEach((s,i)=>{s.classList.remove('active','done');if(i+1<n)s.classList.add('done');if(i+1===n)s.classList.add('active')})}
+
+async function handleFile(file){
+  if(!file){return}
+  const allowed=['pdf','docx','txt','md'];
+  if(!allowed.includes(file.name.split('.').pop().toLowerCase())){toast('不支持的文件类型，请上传 PDF/DOCX/TXT/MD','error');return}
+
+  const status=document.getElementById('uploadStatus');
+  status.classList.remove('hidden');
+  status.innerHTML='<div class="empty-state"><p>⏳ 正在解析简历，提取候选人画像（约 15-30 秒）...</p></div>';
+  document.getElementById('dropZone').classList.add('hidden');
+  document.getElementById('btnReset').classList.add('hidden');
+
+  try{
+    const form=new FormData();
+    form.append('file',file);
+    const resp=await fetch(`${API}/api/v1/resumes/upload-sync`,{method:'POST',body:form});
+    const result=await resp.json();
+
+    if(resp.ok && result.data){
+      const p=result.data;
+      currentResumeId=p.resume_id;
+      currentProfile=p;
+
+      // 构建技能标签
+      const levelClass={'expert':'tag-expert','advanced':'tag-advanced','intermediate':'tag-mid','novice':'tag-novice'};
+      const coreSkills=(p.core_skills||[]);
+      const skillsHtml=coreSkills.length>0
+        ? coreSkills.map(s=>`<span class="tag ${levelClass[s.level]||'tag-novice'}">${s.skill} (${s.level}, ${s.years||'?'}年)</span>`).join(' ')
+        : (p.skills||[]).map(s=>`<span class="tag tag-skill">${s}</span>`).join(' ') || '<span class="text-muted">未识别</span>';
+
+      // 院校信息
+      const schools=p.education_summary?.schools||p.education_summary?.top_schools||[];
+      const degree=p.education_summary?.highest_degree||'';
+      const eduLine=schools.length>0 ? `${schools[0]}${degree?' · '+degree:''}` : '未知';
+
+      // 风险点
+      const risks=(p.risk_areas||[]);
+      const risksHtml=risks.length>0
+        ? risks.map(r=>`<div style="padding:6px 0;border-bottom:1px solid rgba(239,68,68,.1)"><span style="color:#f87171;margin-right:6px">⚠</span> ${r}</div>`).join('')
+        : '<span class="text-muted">未识别明显风险</span>';
+
+      // 优势
+      const strengths=(p.strengths||[]);
+      const strengthsHtml=strengths.length>0
+        ? strengths.map(s=>`<span class="tag tag-expert">💪 ${s}</span>`).join(' ')
+        : '<span class="text-muted">未识别</span>';
+
+      status.innerHTML=`
+        <div style="background:rgba(16,185,129,.1);border:1px solid var(--success);border-radius:var(--radius);padding:20px">
+          <p style="font-weight:700;color:var(--success);font-size:16px;margin-bottom:16px">✅ 简历深度分析完成</p>
+
+          <div class="profile-grid" style="margin-bottom:16px">
+            <div class="profile-item"><div class="label">目标岗位</div><div class="value">${p.target_role||'未识别'}</div></div>
+            <div class="profile-item"><div class="label">院校</div><div class="value">${eduLine}</div></div>
+            <div class="profile-item"><div class="label">公司</div><div class="value">${(p.work_summary?.total_companies||0)} 家</div></div>
+            <div class="profile-item"><div class="label">最近职位</div><div class="value">${p.work_summary?.latest_title||'未知'}</div></div>
+          </div>
+
+          <div class="profile-item" style="margin-bottom:12px"><div class="label">核心技能评估</div><div style="margin-top:6px">${skillsHtml}</div></div>
+
+          ${p.analysis_summary ? `<div class="profile-item" style="margin-bottom:12px"><div class="label">综合评估</div><div style="margin-top:4px;line-height:1.7;white-space:pre-wrap">${p.analysis_summary}</div></div>` : ''}
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div class="profile-item"><div class="label">优势</div><div style="margin-top:6px">${strengthsHtml}</div></div>
+            <div class="profile-item"><div class="label">需验证的风险点</div><div style="margin-top:6px">${risksHtml}</div></div>
+          </div>
+
+          ${p.interview_strategy ? `<div class="profile-item"><div class="label">面试策略建议</div><div style="margin-top:4px;line-height:1.7;white-space:pre-wrap">${p.interview_strategy}</div></div>` : ''}
+        </div>`;
+
+      document.getElementById('btnReset').classList.remove('hidden');
+      document.getElementById('card-job').style.opacity='1';
+      document.getElementById('card-job').style.pointerEvents='auto';
+      document.getElementById('btnGenerate').disabled=false;
+      updateStep(2);
+
+      // 自动填充岗位
+      if(p.target_role&&!document.getElementById('jobTitle').value){
+        document.getElementById('jobTitle').value=p.target_role;
+      }
+      toast('简历解析完成！请设置岗位信息后生成题目');
+    }else{
+      status.innerHTML=`<div class="empty-state" style="color:var(--danger)"><p>❌ 解析失败：${result.message||'未知错误'}</p></div>`;
+      document.getElementById('btnReset').classList.remove('hidden');
+    }
+  }catch(e){
+    status.innerHTML=`<div class="empty-state" style="color:var(--danger)"><p>❌ 网络错误：${e.message}</p></div>`;
+    document.getElementById('btnReset').classList.remove('hidden');
+  }
+}
+
+function resetUpload(){
+  currentResumeId=null;currentProfile=null;
+  document.getElementById('uploadStatus').classList.add('hidden');
+  document.getElementById('dropZone').classList.remove('hidden');
+  document.getElementById('btnReset').classList.add('hidden');
+  document.getElementById('fileInput').value='';
+  document.getElementById('card-job').style.opacity='0.4';
+  document.getElementById('card-job').style.pointerEvents='none';
+  document.getElementById('btnGenerate').disabled=true;
+  updateStep(1);
+}
+
+async function generateQuestions(){
+  const jobTitle=document.getElementById('jobTitle').value;
+  if(!jobTitle){toast('请输入目标岗位','error');return}
+
+  const data={
+    job_title:jobTitle,
+    job_description:document.getElementById('jobDescription').value,
+    question_count:parseInt(document.getElementById('questionCount').value)||5,
+    difficulty:document.getElementById('difficulty').value,
+    question_types:Array.from(document.getElementById('questionTypes').selectedOptions).map(o=>o.value),
+    resume_id:currentResumeId,
+  };
+
+  const btn=document.getElementById('btnGenerate');
+  btn.disabled=true;btn.textContent='⏳ DeepSeek 出题中...（约 15-30 秒）';
+  updateStep(3);
+
+  try{
+    // Create interview
+    const r1=await fetch(`${API}/api/v1/interviews/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const d1=await r1.json();
+    if(!r1.ok){toast(d1.message||'创建失败','error');btn.disabled=false;btn.textContent='🤖 生成面试题目';return}
+    const iid=d1.data.id;
+
+    // Generate questions
+    const r2=await fetch(`${API}/api/v1/interviews/${iid}/generate-questions`,{method:'POST',headers:{'Content-Type':'application/json'}});
+    const d2=await r2.json();
+
+    if(r2.ok && d2.data?.questions){
+      const qs=d2.data.questions;
+      let html=`<div class="profile-grid"><div class="profile-item"><div class="label">岗位</div><div class="value">${jobTitle}</div></div><div class="profile-item"><div class="label">难度</div><div class="value">${data.difficulty}</div></div><div class="profile-item"><div class="label">数量</div><div class="value">${qs.length} 题</div></div>${currentProfile?`<div class="profile-item"><div class="label">基于画像</div><div class="value">${(currentProfile.core_skills||currentProfile.skills||[]).length} 项技能</div></div>`:''}</div>`;
+
+      qs.forEach((q,i)=>{
+        html+=`<div class="question-card">
+          <div class="q-header"><strong>Q${i+1}. [${q.question_type}]</strong></div>
+          <div class="q-content">${q.content}</div>
+          <details><summary>📝 参考答案 & 考查要点（面试官参考）</summary>
+            <div class="detail-box">
+              <p style="white-space:pre-wrap">${q.reference_answer||'无'}</p>
+              <div class="mt-8">${(q.key_points||[]).map(k=>`<span class="tag tag-skill">✅ ${k}</span>`).join(' ')}</div>
+            </div>
+          </details>
+        </div>`;
+      });
+
+      document.getElementById('resultContent').innerHTML=html;
+      document.getElementById('card-result').classList.remove('hidden');
+      toast('题目生成成功！');
+    }else{
+      toast('出题失败，请重试','error');
+    }
+  }catch(e){toast('网络错误：'+e.message,'error')}
+
+  btn.disabled=false;btn.textContent='🤖 重新生成题目';
+  loadHistory();
+}
+
+async function loadHistory(){
+  try{
+    const resp=await fetch(`${API}/api/v1/interviews/`);
+    const result=await resp.json();
+    const items=result.data||[];
+    if(!items.length){document.getElementById('historyList').innerHTML='<div class="empty-state"><div class="icon">📋</div><p>暂无历史面试</p></div>';return}
+
+    let html='';
+    for(const s of items){
+      html+=`<div class="question-card"><div style="display:flex;justify-content:space-between;align-items:center"><div><strong>${s.job_title}</strong> <span class="tag tag-skill">${s.status}</span></div><span class="text-muted">${new Date(s.created_at).toLocaleString()}</span></div><p class="text-muted mt-8">题目: ${s.question_count} | 难度: ${s.difficulty}</p><button class="btn btn-outline btn-sm mt-8" onclick="viewQuestions('${s.id}')">📝 查看题目</button><div id="hist-${s.id}" class="mt-8"></div></div>`;
+    }
+    document.getElementById('historyList').innerHTML=html;
+  }catch(e){}
+}
+
+async function viewQuestions(iid){
+  const el=document.getElementById(`hist-${iid}`);
+  el.innerHTML='<p class="text-muted">加载中...</p>';
+  try{
+    const resp=await fetch(`${API}/api/v1/interviews/${iid}/questions`);
+    const result=await resp.json();
+    const qs=result.data||[];
+    let html='';
+    qs.forEach((q,i)=>html+=`<div class="question-card" style="border:1px solid var(--primary)"><div class="q-header"><strong>Q${i+1}. [${q.question_type}]</strong></div><div class="q-content">${q.content}</div><details><summary>📝 参考答案 & 考查要点</summary><div class="detail-box"><p style="white-space:pre-wrap">${q.reference_answer||'无'}</p>${(q.key_points||[]).map(k=>`<span class="tag tag-skill">✅ ${k}</span>`).join(' ')}</div></details></div>`);
+    el.innerHTML=html||'<p class="text-muted">暂无题目</p>';
+  }catch(e){el.innerHTML='<p class="text-muted">加载失败</p>'}
+}
+
+loadHistory();
+</script>
+</body>
+</html>

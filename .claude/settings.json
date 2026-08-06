@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(taskkill /F /IM python.exe)",
+      "Bash(USE_MOCK_DB=true python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload)",
+      "Bash(python -c \"from app.core.config import get_settings; s = get_settings\\(\\); print\\(f'USE_MOCK_DB={s.app.USE_MOCK_DB}'\\); print\\(f'DEBUG={s.app.DEBUG}'\\)\")",
+      "Bash(python -c \"import dotenv; print\\('python-dotenv available'\\)\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/docs)",
+      "Bash(curl -s http://localhost:8000/api/v1/scoring/batch -X POST -H \"Content-Type: application/json\" -d '{\"interview_id\":\"00000000-0000-0000-0000-000000000001\"}')",
+      "Bash(curl -s http://localhost:8000/api/v1/reports/)"
+    ]
+  }
+}

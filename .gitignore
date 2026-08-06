@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Env
+.env
+!.env.example
+
+# Uploads
+uploads/
+
+# Test artifacts
+.pytest_cache/
+test_resume.*
+_test.*
+_real.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
