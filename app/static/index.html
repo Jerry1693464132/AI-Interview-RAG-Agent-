@@ -110,7 +110,7 @@
     <div class="form-group"><label>岗位描述</label><textarea id="jobDescription" rows="3" placeholder="如：负责微服务架构设计，要求熟悉 FastAPI、PostgreSQL、Docker、Kubernetes..."></textarea></div>
     <div class="form-row">
       <div class="form-group"><label>题目数量</label><input type="number" id="questionCount" value="5" min="1" max="20"></div>
-      <div class="form-group"><label>题目类型</label><select id="questionTypes" multiple style="height:80px"><option value="knowledge" selected>知识深度</option><option value="practice" selected>工程实践</option><option value="soft_skill" selected>软技能</option></select></div>
+      <div class="form-group"><label>题目类型</label><select id="questionType"><option value="knowledge">知识深度（原理/机制/底层）</option><option value="practice">工程实践（设计/排查/架构）</option><option value="soft_skill">软技能（沟通/协作/学习）</option></select></div>
     </div>
     <button class="btn btn-primary" id="btnGenerate" onclick="generateQuestions()" disabled>🤖 生成面试题目</button>
   </div>
@@ -253,7 +253,7 @@ async function generateQuestions(){
     job_description:document.getElementById('jobDescription').value,
     question_count:parseInt(document.getElementById('questionCount').value)||5,
     difficulty:document.getElementById('difficulty').value,
-    question_types:Array.from(document.getElementById('questionTypes').selectedOptions).map(o=>o.value),
+    question_types:[document.getElementById('questionType').value],
     resume_id:currentResumeId,
   };
 
