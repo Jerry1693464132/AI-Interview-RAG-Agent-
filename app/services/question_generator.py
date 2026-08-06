@@ -88,8 +88,10 @@ class QuestionGenerator:
             question_types = list(self.DEFAULT_TYPE_DISTRIBUTION.keys())
         type_counts = self._distribute_question_types(question_count, question_types)
 
-        # 2. RAG 检索：从题库中获取相关参考内容
+        # 2. RAG 检索：仅保留相似度高的结果
+        MIN_SIMILARITY = 0.3  # 低于此阈值视为不相关，不注入 Prompt
         all_rag_context: list[dict] = []
+        hit_count = 0
         for qtype in type_counts:
             if type_counts[qtype] > 0:
                 results = await self.retriever.retrieve(
@@ -97,10 +99,16 @@ class QuestionGenerator:
                     top_k=max(3, type_counts[qtype] * 2),
                     question_type=qtype,
                     difficulty=difficulty,
+                    min_similarity=MIN_SIMILARITY,
                 )
-                all_rag_context.extend([
-                    {"content": r.content, "metadata": r.metadata} for r in results
-                ])
+                for r in results:
+                    all_rag_context.append({"content": r.content, "metadata": r.metadata})
+                    if r.score >= MIN_SIMILARITY:
+                        hit_count += 1
+
+        # 如果题库中没有高相关度的题目，则不注入 RAG 上下文，纯 LLM 生成
+        rag_mode = "enriched" if hit_count > 0 else "pure_llm"
+        logger.info("rag_generation_mode", mode=rag_mode, hits=hit_count, total_retrieved=len(all_rag_context))
 
         # 3. 调用 DeepSeek 生成题目
         try:
@@ -153,31 +161,40 @@ class QuestionGenerator:
         type_counts: dict,
         rag_context: list[dict],
     ) -> list[dict]:
-        """使用 DeepSeek 生成题目 — RAG 内容注入 Prompt。"""
-        # 构建 RAG 上下文文本（截断）
+        """使用 DeepSeek 生成题目 — 智能处理 RAG 上下文。"""
+        # 构建 RAG 上下文（仅保留高相关度结果）
         rag_texts: list[str] = []
-        total_chars = 0
-        for ctx in rag_context[:20]:  # 最多 20 条参考
-            chunk = f"- {ctx['content'][:300]}"
-            total_chars += len(chunk)
-            if total_chars > 4000:
-                break
-            rag_texts.append(chunk)
+        if rag_context:
+            total_chars = 0
+            for ctx in rag_context[:10]:
+                chunk = f"- {ctx['content'][:300]}"
+                total_chars += len(chunk)
+                if total_chars > 3000:
+                    break
+                rag_texts.append(chunk)
 
         profile_summary = self._format_profile(profile)
 
+        # 根据有无 RAG 结果选择不同的 Prompt 策略
+        if rag_texts:
+            rag_section = (
+                "## 参考题库\n以下是从题库中检索到的相关题目，仅供参考格式和深度。"
+                "请生成新的、不重复的题目，可以借鉴其出题思路但不要照抄：\n"
+                + "\n".join(rag_texts)
+            )
+        else:
+            rag_section = (
+                "## 重要提示\n题库中没有找到高度相关的参考题目。"
+                "请完全基于岗位描述和候选人画像，原创生成题目。"
+                "题目要切合岗位的实际工作场景和技术栈。"
+            )
+
         prompt = (
-            f"## 岗位信息\n"
-            f"- 岗位: {job_title}\n"
-            f"- 描述: {job_description}\n"
-            f"- 难度: {difficulty}\n"
-            f"- 题目数量: {question_count}\n\n"
+            f"## 岗位信息\n- 岗位: {job_title}\n- 描述: {job_description}\n"
+            f"- 难度: {difficulty}\n- 题目数量: {question_count}\n\n"
             f"## 题型分布\n"
             + "\n".join(f"- {t}: {c} 题" for t, c in type_counts.items() if c > 0)
-            + f"\n\n## 候选人画像\n{profile_summary}\n\n"
-            f"## 参考题库 (RAG 检索结果)\n"
-            + "\n".join(rag_texts) if rag_texts else "(无参考资料)"
-            + "\n\n请生成题目。"
+            + f"\n\n## 候选人画像\n{profile_summary}\n\n{rag_section}\n\n请生成题目。"
         )
 
         response = await self.llm.chat(
@@ -198,22 +215,22 @@ class QuestionGenerator:
 
     def _generation_system_prompt(self) -> str:
         return (
-            "你是一位资深技术面试官。请根据岗位需求、候选人画像和参考题库，"
-            "生成个性化的面试题目。\n\n"
+            "你是一位资深技术面试官。请根据岗位需求、候选人画像生成个性化面试题。\n\n"
             "## 要求\n"
             '- 以 JSON 格式输出: {"questions": [...]}\n'
             "每道题目包含:\n"
             "  - content: 题目内容\n"
             "  - question_type: 题型 (technical/coding/system_design/behavioral/scenario)\n"
-            "  - reference_answer: 参考答案（详细、准确，用于后续评分基准）\n"
-            "  - key_points: 关键得分点列表（评分时逐一检查）\n"
-            "  - source_chunks: 引用的 RAG 内容片段索引\n\n"
+            "  - reference_answer: 参考答案（详细、准确）\n"
+            "  - key_points: 关键考查点列表（3-7 个具体可量化的点）\n"
+            "  - source_chunks: 引用的 RAG 内容片段索引（如无则为空数组）\n\n"
             "## 出题原则\n"
-            "1. 题目要有区分度，能测试候选人的真实水平\n"
-            "2. reference_answer 必须专业准确，因为它是评分的黄金标准\n"
-            "3. key_points 要具体可量化，每条代表一个可明确判断的得分点\n"
-            "4. 避免过于偏门或仅限于特定公司的知识点\n"
-            "5. 针对候选人技能弱点适当增加考查深度"
+            "1. 如果题库内容与岗位不相关，忽略题库，基于岗位需求完全原创出题\n"
+            "2. 题目要有区分度，能测试候选人的真实水平\n"
+            "3. reference_answer 必须专业准确\n"
+            "4. key_points 要具体可量化\n"
+            "5. 避免偏门或仅限特定公司的知识点\n"
+            "6. 如果 candidates 画像中有标注的弱点，优先考查那些领域"
         )
 
     def _format_profile(self, profile: dict) -> str:
