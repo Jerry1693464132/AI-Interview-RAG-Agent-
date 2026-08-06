@@ -489,5 +489,155 @@
       "ReAct模式（推理+行动循环）",
       "实际应用场景对比"
     ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "什么是 MCP（Model Context Protocol）？它和 Skill 有什么区别？",
+    "tags": [
+      "MCP",
+      "Agent",
+      "协议"
+    ],
+    "reference_answer": "MCP 是 Anthropic 提出的开放标准协议，规范 AI 应用与外部工具和数据源的连接方式，像是 AI 世界的 USB-C 接口，解决工具对接碎片化的问题，关注\"怎么把外部能力接进来\"。Skill 是把特定任务的完整解决方案打包成可复用的能力单元，包含操作说明加脚本资源，关注\"怎么把一件事做好\"。一句话：MCP 管\"连什么工具\"，Skill 管\"怎么把活干好\"。",
+    "key_points": [
+      "MCP协议定义与作用",
+      "Skill的定义与作用",
+      "两者的关注点区别",
+      "工具对接vs任务执行",
+      "开放性vs可复用"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "什么是 Prompt Engineering（提示词工程）？有哪些常用技巧？",
+    "tags": [
+      "Prompt",
+      "LLM"
+    ],
+    "reference_answer": "通过设计输入的提示词来引导模型输出更好结果的技术。常用技巧：1) 明确角色和任务（告诉模型\"你是资深法律顾问\"）；2) Few-shot 给出输入输出示例；3) 思维链 CoT 让模型逐步推理；4) 明确输出格式要求 JSON 或指定结构。同样的任务，prompt 质量决定输出效果。",
+    "key_points": [
+      "角色与任务设定",
+      "Few-shot示例",
+      "Chain-of-Thought推理",
+      "结构化输出",
+      "实际效果对比"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "什么是 RAG？为什么需要它？请描述其基本流程",
+    "tags": [
+      "RAG",
+      "LLM",
+      "向量检索"
+    ],
+    "reference_answer": "RAG（检索增强生成）先检索再生成：从外部知识库检索相关内容，塞进 prompt，让模型基于资料回答。需要它的原因：大模型知识有截止时间+不知道私有数据。RAG 外挂一个可查的资料库，补充最新和私有知识，减少幻觉，无需重新训练。流程：文档切块→向量化→存入向量库→用户提问时向量化→检索最相似片段→拼进 prompt→模型回答。",
+    "key_points": [
+      "检索+生成流程",
+      "知识截止与私有数据问题",
+      "文档切块与向量化",
+      "向量库检索",
+      "减少幻觉的价值"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Agent 的 ReAct 模式讲解一下？",
+    "tags": [
+      "Agent",
+      "ReAct",
+      "推理"
+    ],
+    "reference_answer": "ReAct 是 Agent 最经典的工作模式，核心是\"想一步、做一步、再想一步\"循环：先思考当前该干嘛、该调用哪个工具，再执行动作，把工具返回结果作为观察喂给 AI，基于观察进入下一轮思考，直到任务完成。意义在于把黑箱式输出变成有依据、可拆解、基于真实反馈的过程，减少幻觉，决策可解释。",
+    "key_points": [
+      "Thought-Action-Observation循环",
+      "推理与行动交替",
+      "工具调用决策",
+      "观察驱动下一步",
+      "ReAct vs 直接生成"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Agent 和 Workflow（工作流）有什么区别？",
+    "tags": [
+      "Agent",
+      "Workflow",
+      "架构"
+    ],
+    "reference_answer": "两者都是编排 LLM 的方式。Workflow：执行路径由开发者提前写死，第一步干什么、什么条件走哪个分支都是代码预定义的，可控稳定可预测。Agent：执行路径由模型自己动态决定，给定目标和工具，具体怎么走自己规划，灵活但不可控。Workflow 是人规划路线让模型执行，Agent 是模型自己规划路线。实际生产里两者结合：用 Workflow 保证主干稳定，需要灵活性的环节用 Agent。",
+    "key_points": [
+      "预定义vs动态规划",
+      "可控性对比",
+      "适用场景区分",
+      "生产中的混合策略",
+      "灵活性与稳定性权衡"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "什么是 Function Calling？它是如何工作的？",
+    "tags": [
+      "Function Calling",
+      "Agent",
+      "API"
+    ],
+    "reference_answer": "Function Calling 让大模型能调用外部工具/函数，是 Agent 能干活的技术基础。流程：告诉模型有哪些工具、每工具需要什么参数→模型判断需要某工具时返回结构化调用请求（函数名+参数）→程序实际执行函数→结果喂回模型→模型继续工作。模型本身不执行代码，只决定调什么、传什么参数，真正的执行是程序做的。",
+    "key_points": [
+      "工具定义(Schema)",
+      "模型决策调用",
+      "程序执行+结果回传",
+      "模型不执行代码",
+      "功能边界突破"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "你的 Agent 是如何实现记忆的？请分层讲解",
+    "tags": [
+      "Agent",
+      "记忆",
+      "RAG"
+    ],
+    "reference_answer": "三层记忆架构：工作记忆存当前任务执行中的中间状态（已查数据、当前进度），用变量维护，任务结束清空。短期记忆存当前对话历史，用 messages 列表维护，接近上下文上限时做摘要压缩保留关键信息。长期记忆存重要事实、用户偏好、历史总结，放向量数据库，每次对话将问题向量化检索相关片段拼进 prompt，跨对话也能记住之前内容，本质是一次 RAG。",
+    "key_points": [
+      "三层架构(工作/短期/长期)",
+      "工作记忆的任务隔离",
+      "短期记忆的摘要压缩",
+      "长期记忆的向量检索",
+      "RAG实现跨对话记忆"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "System Prompt 和 User Prompt 有什么区别？分别应该放什么内容？",
+    "tags": [
+      "Prompt",
+      "LLM"
+    ],
+    "reference_answer": "System Prompt 定全局规则、角色、行为边界，如\"你是专业客服，只回答产品问题，语气礼貌\"，优先级高，管模型整体表现。User Prompt 是用户每轮实际问的具体问题。简单说，System Prompt 是\"人设和规矩\"，User Prompt 是\"具体要办的事\"。做应用时把稳定的角色设定、约束、输出要求放 system，动态的用户输入放 user。",
+    "key_points": [
+      "System vs User的职责",
+      "全局规则vs具体问题",
+      "优先级",
+      "稳定性vs动态性",
+      "工程实践建议"
+    ]
   }
 ]
