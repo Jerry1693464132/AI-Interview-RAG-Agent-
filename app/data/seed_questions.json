@@ -249,7 +249,7 @@
     "category": "devops",
     "difficulty": "medium",
     "question_type": "knowledge",
-    "content": "请解释 CI/CD 流水线的核心环节，如何设计一个高效的 Pipeline",
+    "content": "请解释 AI Agent 的核心架构，包括感知、规划、工具调用、记忆模块的作用和关系",
     "tags": [
       "CI/CD",
       "自动化"
@@ -261,6 +261,233 @@
       "分阶段部署",
       "回滚策略",
       "GitOps"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "解释 RAG（检索增强生成）的工作原理，RAG 相比纯 LLM 生成有哪些优势？",
+    "tags": [
+      "RAG",
+      "LLM",
+      "向量检索"
+    ],
+    "reference_answer": "RAG 将用户问题向量化后在知识库中检索相关文档，将检索结果注入 LLM Prompt 中，使 LLM 能够基于外部知识生成更准确、更新的回答。优势：减少幻觉、知识可更新、可溯源。",
+    "key_points": [
+      "检索+生成的流水线",
+      "向量化与相似度搜索",
+      "Prompt注入",
+      "幻觉减少",
+      "知识库管理"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "设计一个基于 LangChain 的文档问答系统，要求支持 PDF 上传、RAG 检索和对话记忆",
+    "tags": [
+      "LangChain",
+      "RAG",
+      "文档问答"
+    ],
+    "reference_answer": "使用 LangChain 的 DocumentLoader 加载 PDF，TextSplitter 分块，VectorStore 存储嵌入向量，RetrievalQA 链实现检索+生成。用 ConversationBufferMemory 维护对话历史。",
+    "key_points": [
+      "文档加载与分块",
+      "Embedding与向量存储",
+      "RetrievalQA链",
+      "对话记忆管理",
+      "流式输出"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "什么是向量数据库？请对比 pgvector、Milvus、Pinecone 的适用场景和选型考虑",
+    "tags": [
+      "向量数据库",
+      "pgvector",
+      "RAG"
+    ],
+    "reference_answer": "向量数据库存储和检索高维向量，是 RAG 的核心组件。pgvector 适合已有 PostgreSQL 的项目，Milvus 适合大规模独立部署，Pinecone 是 SaaS 方案免运维。",
+    "key_points": [
+      "向量索引算法(HNSW/IVF)",
+      "pgvector与PostgreSQL集成",
+      "Milvus分布式架构",
+      "Pinecone托管服务",
+      "精度vs性能权衡"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "AI Agent 中 Tool Calling 的工作原理是什么？如何在 LangChain 中实现 Agent 的工具调用？",
+    "tags": [
+      "Agent",
+      "Tool Calling",
+      "LangChain"
+    ],
+    "reference_answer": "Agent 通过 Function Calling 机制，将可用工具以 JSON Schema 形式描述给 LLM，LLM 根据用户意图选择调用哪个工具及参数。LangChain 使用 create_tool_calling_agent 封装此流程。",
+    "key_points": [
+      "Function Calling原理",
+      "Tool定义(Schema+函数)",
+      "Agent决策循环",
+      "错误处理与重试",
+      "多工具编排"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Prompt Engineering 有哪些核心技巧？如何设计有效的 System Prompt？",
+    "tags": [
+      "Prompt",
+      "LLM"
+    ],
+    "reference_answer": "核心技巧包括：角色设定、输出格式约束、Few-shot 示例、Chain-of-Thought 推理、分步指令。好的 System Prompt 需要明确角色、任务边界、输出格式、禁止事项。",
+    "key_points": [
+      "角色与任务边界",
+      "输出格式约束",
+      "Few-shot vs Zero-shot",
+      "CoT推理",
+      "Prompt模板版本管理"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "设计一个 RAG 系统的评估方案，包括检索质量、生成质量和端到端效果的评估指标",
+    "tags": [
+      "RAG",
+      "评估",
+      "系统设计"
+    ],
+    "reference_answer": "检索质量：Recall@K、MRR、NDCG。生成质量：Faithfulness、Answer Relevance、Context Relevance。端到端：人工评估+自动化指标。使用 RAGAS 等框架进行自动化评估。",
+    "key_points": [
+      "Recall@K与MRR",
+      "Faithfulness真实性",
+      "Answer Relevance",
+      "Context Relevance",
+      "RAGAS评估框架"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "如何使用 LangChain 的 Memory 模块实现多轮对话？对比不同的 Memory 策略",
+    "tags": [
+      "LangChain",
+      "对话系统",
+      "Memory"
+    ],
+    "reference_answer": "ConversationBufferMemory 存储全部对话，ConversationSummaryMemory 只存摘要节省 token，ConversationTokenBufferMemory 按 token 限制。选择取决于对话长度和成本。",
+    "key_points": [
+      "Buffer vs Summary",
+      "Token限制策略",
+      "持久化存储",
+      "多用户隔离",
+      "窗口滑动"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "解释 Embedding 模型的选型考虑因素：维度、语言支持、推理速度、成本",
+    "tags": [
+      "Embedding",
+      "模型选型"
+    ],
+    "reference_answer": "维度影响精度和存储成本，中文场景优先选择中文优化模型（如 Qwen3.7），推理速度影响延迟和吞吐量，API调用成本 vs 本地部署成本。",
+    "key_points": [
+      "维度vs精度权衡",
+      "中文优化模型",
+      "API vs 本地部署",
+      "批量处理优化",
+      "模型更新策略"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "如何向非技术管理者解释 RAG 系统的工作原理和价值？",
+    "tags": [
+      "沟通",
+      "AI应用"
+    ],
+    "reference_answer": "用类比解释：RAG 就像给 AI 配了一个图书管理员，提问时先查资料再回答。价值：减少 AI 胡编乱造、知识可以随时更新、回答可以追溯到来源。",
+    "key_points": [
+      "通俗类比",
+      "商业价值表达",
+      "幻觉问题解释",
+      "可溯源的优势",
+      "成本与收益"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "设计一个生产级 RAG 系统，需要支持 100万+ 文档、低延迟（<500ms）检索、高可用",
+    "tags": [
+      "系统设计",
+      "RAG",
+      "高并发"
+    ],
+    "reference_answer": "分层架构：接入层(API网关) → 检索层(Milvus集群) → 生成层(LLM服务)。缓存热点查询，异步索引更新，多副本部署。",
+    "key_points": [
+      "分层架构设计",
+      "缓存策略",
+      "索引更新机制",
+      "多副本高可用",
+      "监控告警"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "你平时用过哪些 AI 编程工具？在实际使用中如何选择合适的工具？",
+    "tags": [
+      "AI编程",
+      "工具选型",
+      "Claude Code",
+      "Codex"
+    ],
+    "reference_answer": "以 Claude Code 和 Codex 为例：复杂任务（跨文件改动、架构重构、上下文复杂的 bug 排查）用 Claude Code，其复杂任务规划能力和上下文处理更强。简单任务（单函数编写、小功能补充、样板代码生成）用 Codex，够用且成本更低。核心思路是按任务复杂度分工，同时考虑成本控制。",
+    "key_points": [
+      "区分复杂vs简单任务的标准",
+      "不同工具的定位和强项",
+      "成本控制意识",
+      "实际使用经验举例",
+      "任务复杂度与工具匹配"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "讲解一下普通大模型和 Agent 有什么区别？",
+    "tags": [
+      "Agent",
+      "LLM",
+      "ReAct",
+      "工具调用"
+    ],
+    "reference_answer": "普通大模型是一问一答的模式，只具备聊天交互功能，不能调用工具完成实际工作。Agent 在大模型基础上增加了工具调用、自主规划和记忆能力：给定一个目标，Agent 能自己决定分几步走、每步调用什么工具、根据结果调整下一步，循环直到任务完成。经典实现模式是推理和行动交替的 ReAct（Reasoning + Acting）模式。",
+    "key_points": [
+      "一问一答 vs 自主规划",
+      "工具调用能力",
+      "记忆与状态管理",
+      "ReAct模式（推理+行动循环）",
+      "实际应用场景对比"
     ]
   }
 ]
