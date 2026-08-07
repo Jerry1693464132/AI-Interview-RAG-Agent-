@@ -129,7 +129,8 @@ async def generate_questions(interview_id: UUID, db: AsyncSession = Depends(get_
         "questions": [
             {"id": str(q.id), "content": q.content, "question_type": q.question_type,
              "order_index": q.order_index, "reference_answer": q.reference_answer,
-             "key_points": q.key_points}
+             "key_points": q.key_points,
+             "source": q.source_chunks[0] if q.source_chunks else "unknown"}
             for q in questions
         ]
     })

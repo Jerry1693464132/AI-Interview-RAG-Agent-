@@ -79,58 +79,70 @@ class QuestionGenerator:
             question_types = list(self.DEFAULT_TYPE_DISTRIBUTION.keys())
         type_counts = self._distribute_question_types(question_count, question_types)
 
-        # 2. RAG 检索：仅保留相似度高的结果
-        MIN_SIMILARITY = 0.3  # 低于此阈值视为不相关，不注入 Prompt
+        # 2. RAG 检索：优先从题库取，不够的 LLM 补
+        SIM_THRESHOLD = 0.01  # RRF融合后分数较小，设低以命中bank题目
+        bank_questions: list[dict] = []
         all_rag_context: list[dict] = []
-        hit_count = 0
-        for qtype in type_counts:
-            if type_counts[qtype] > 0:
-                results = await self.retriever.retrieve(
-                    query=f"{job_title} {job_description} {qtype}",
-                    top_k=max(3, type_counts[qtype] * 2),
-                    question_type=qtype,
-                    difficulty=difficulty,
-                    min_similarity=MIN_SIMILARITY,
-                )
-                for r in results:
+        for qtype, needed in type_counts.items():
+            if needed <= 0:
+                continue
+            results = await self.retriever.retrieve(
+                query=f"{job_title} {job_description} {qtype}",
+                top_k=needed * 3, question_type=qtype, difficulty=difficulty,
+                min_similarity=SIM_THRESHOLD,
+            )
+            taken = 0
+            for r in results:
+                if r.score < SIM_THRESHOLD or taken >= needed:
                     all_rag_context.append({"content": r.content, "metadata": r.metadata})
-                    if r.score >= MIN_SIMILARITY:
-                        hit_count += 1
+                    continue
+                bank_questions.append({
+                    "content": r.content, "question_type": qtype,
+                    "reference_answer": r.metadata.get("reference_answer", ""),
+                    "key_points": r.metadata.get("key_points", []),
+                    "source": "bank", "bank_score": r.score,
+                })
+                taken += 1
+            # 剩余的该类型需要 LLM 生成
+            type_counts[qtype] = needed - taken
 
-        # 如果题库中没有高相关度的题目，则不注入 RAG 上下文，纯 LLM 生成
-        rag_mode = "enriched" if hit_count > 0 else "pure_llm"
-        logger.info("rag_generation_mode", mode=rag_mode, hits=hit_count, total_retrieved=len(all_rag_context))
+        logger.info("question_source", from_bank=len(bank_questions), to_generate=sum(type_counts.values()))
 
-        # 3. 调用 DeepSeek 生成题目
-        try:
-            generated = await self._generate_with_llm(
-                job_title=job_title,
-                job_description=job_description,
-                profile=profile,
-                question_count=question_count,
-                difficulty=difficulty,
-                type_counts=type_counts,
-                rag_context=all_rag_context,
-            )
-        except Exception as exc:
-            logger.error("question_generation_failed", error=str(exc))
-            raise QuestionGenerateError(f"题目生成失败: {exc}") from exc
-
-        # 4. 持久化
+        # 3. 不够的用 LLM 补
         questions: list[InterviewQuestion] = []
-        for i, q in enumerate(generated):
+        idx = 0
+        for q in bank_questions:
+            idx += 1
             question = InterviewQuestion(
-                session_id=interview_id,
-                content=q["content"],
-                question_type=q.get("question_type", "technical"),
-                difficulty=difficulty,
-                order_index=i + 1,
-                reference_answer=q.get("reference_answer", ""),
-                key_points=q.get("key_points", []),
-                source_chunks=q.get("source_chunks", []),
+                session_id=interview_id, content=q["content"],
+                question_type=q["question_type"], difficulty=difficulty,
+                order_index=idx, reference_answer=q["reference_answer"],
+                key_points=q["key_points"], source_chunks=[q["source"]],
             )
-            session.add(question)
-            questions.append(question)
+            session.add(question); questions.append(question)
+
+        if sum(type_counts.values()) > 0:
+            try:
+                generated = await self._generate_with_llm(
+                    job_title=job_title, job_description=job_description,
+                    profile=profile, question_count=sum(type_counts.values()),
+                    difficulty=difficulty, type_counts=type_counts,
+                    rag_context=all_rag_context,
+                )
+            except Exception as exc:
+                logger.error("llm_generation_failed", error=str(exc))
+                generated = []
+            for q in generated:
+                idx += 1
+                question = InterviewQuestion(
+                    session_id=interview_id, content=q["content"],
+                    question_type=q.get("question_type", "technical"),
+                    difficulty=difficulty, order_index=idx,
+                    reference_answer=q.get("reference_answer", ""),
+                    key_points=q.get("key_points", []),
+                    source_chunks=["llm"],
+                )
+                session.add(question); questions.append(question)
 
         await session.flush()
         logger.info(
