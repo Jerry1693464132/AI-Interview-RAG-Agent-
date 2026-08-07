@@ -102,6 +102,7 @@ class HybridRetriever:
             difficulty=difficulty,
             question_type=question_type,
             min_similarity=min_similarity,
+            query_text=query,
         )
 
         # 3. 关键词检索（并行）

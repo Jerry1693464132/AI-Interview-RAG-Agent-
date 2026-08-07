@@ -145,31 +145,16 @@ class VectorStore:
         difficulty: Optional[str] = None,
         question_type: Optional[str] = None,
         min_similarity: float = 0.0,
+        query_text: str = "",
     ) -> list[SearchResult]:
-        """
-        向量相似度检索 + 元数据过滤。
-
-        使用 cosine distance (<=>) 算子:
-            cosine_similarity = 1 - (embedding <=> query_embedding)
-
-        Args:
-            query_embedding: 查询向量 (1024-dim)
-            top_k:           返回结果数
-            category:        类别过滤
-            difficulty:      难度过滤
-            question_type:   题型过滤
-            min_similarity:  最低相似度阈值 (0-1)
-
-        Returns:
-            SearchResult 列表，按相似度降序排列
-        """
-        # 将向量转为 pgvector 兼容格式
+        """向量相似度检索 + 元数据过滤（mock 模式使用 query_text 做关键词匹配）。"""
         embedding_str = f"[{','.join(str(x) for x in query_embedding)}]"
 
-        # 构建 WHERE 条件
         conditions = ["embedding IS NOT NULL"]
         params: dict[str, Any] = {"embedding": embedding_str, "top_k": top_k}
 
+        if query_text:
+            params["query"] = query_text
         if category:
             conditions.append("category = :category")
             params["category"] = category

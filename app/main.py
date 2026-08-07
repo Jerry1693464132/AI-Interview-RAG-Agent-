@@ -146,15 +146,18 @@ def create_app() -> FastAPI:
                 resume_items = list(_store.get("resumes", {}).values())
                 iq_items = list(_store.get("interview_questions", {}).values())
 
-                # 向量搜索 — 基于关键词做模拟评分
+                # 向量/关键词搜索 — 基于 query + filters 做关键词匹配
                 if "question_bank" in sql.lower():
-                    # 从检索 query 中提取关键词
-                    query_keywords = set()
+                    # 提取搜索关键词
+                    keywords = []
                     if params:
-                        cat = params.get("category", "")
-                        diff = params.get("difficulty", "")
-                        qtype = params.get("question_type", "")
-                        query_keywords = {k.lower() for k in [cat, diff, qtype] if k}
+                        query_text = params.get("query", "")
+                        if query_text:
+                            keywords = [w.lower() for w in query_text.split() if len(w) > 1]
+                        for k in ["category", "difficulty", "question_type"]:
+                            v = params.get(k, "")
+                            if v: keywords.append(v.lower())
+
                     rows = []
                     for item in qb_items:
                         tags = [t.lower() for t in (getattr(item, 'tags', []) or [])]
@@ -162,18 +165,14 @@ def create_app() -> FastAPI:
                         item_qtype = (getattr(item, 'question_type', '') or '').lower()
                         difficulty = (getattr(item, 'difficulty', '') or '').lower()
                         content = (getattr(item, 'content', '') or '').lower()
+                        reference = (getattr(item, 'reference_answer', '') or '').lower()
+                        search_text = f"{content} {reference} {' '.join(tags)} {category}"
 
-                        # 关键词匹配越多相似度越高
-                        score = 0.05  # 基础分很低
-                        key_terms = {category, item_qtype, difficulty}
-                        for kw in query_keywords:
-                            if kw in key_terms:
-                                score += 0.25
-                            if any(kw in t for t in tags):
-                                score += 0.08
-                            if kw in content:
-                                score += 0.02
-                        score = min(score, 0.95)
+                        # 对每个关键词计算匹配分
+                        score = 0.05
+                        if keywords:
+                            hits = sum(1 for kw in keywords if kw in search_text)
+                            score = min(0.05 + hits * 0.15, 0.95)
 
                         row = MagicMock()
                         row.id = item.id; row.content = item.content; row.similarity = round(score, 4)
@@ -182,11 +181,9 @@ def create_app() -> FastAPI:
                         row.key_points = getattr(item, 'key_points', [])
                         rows.append(row)
 
-                    # 按相似度降序排列，取 top_k
                     top_k = params.get("top_k", 5) if params else 5
                     rows.sort(key=lambda r: r.similarity, reverse=True)
-                    rows = rows[:top_k]
-                    return _make_mock_result(rows, scalar_val=len(rows))
+                    return _make_mock_result(rows[:top_k], scalar_val=min(len(rows), top_k))
 
                 # Query-specific tables
                 if "interview_questions" in sql.lower():
