@@ -4322,5 +4322,975 @@
       "trace_id关联三者",
       "ELK+Grafana+Jaeger"
     ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "MySQL 的 InnoDB 存储引擎为什么用 B+ 树而不是 B 树或哈希？",
+    "tags": [
+      "MySQL",
+      "B+树",
+      "InnoDB",
+      "索引"
+    ],
+    "reference_answer": "B+树vs B树：非叶子节点不存数据只存索引，单页容纳更多索引项树更矮(3层存千万数据)，磁盘IO少；叶子节点有序链表，范围查询只需遍历链表。vs哈希：哈希只支持等值查询不支持范围和排序；哈希冲突处理复杂；不适合磁盘存储。核心：B+树在\"磁盘IO次数少+支持范围查询+有序性\"三维度最优平衡。",
+    "key_points": [
+      "非叶子不存数据",
+      "树更矮IO少",
+      "叶子链表范围查询",
+      "哈希不支持范围",
+      "磁盘IO最优"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "聚簇索引和非聚簇索引的区别？什么是回表？怎么避免？",
+    "tags": [
+      "MySQL",
+      "聚簇索引",
+      "回表",
+      "覆盖索引"
+    ],
+    "reference_answer": "聚簇索引叶子存完整行数据一个表只有一个(主键)。非聚簇索引(二级索引)叶子存主键值。回表：二级索引查到主键再去聚簇索引查完整行，两次B+树查找。避免：覆盖索引(查询字段都在二级索引中)。explain看Extra列是否有Using index。高频查询字段组建立联合索引让查询走覆盖索引。",
+    "key_points": [
+      "聚簇一表一个",
+      "二级索引存主键",
+      "回表=两次查找",
+      "覆盖索引消除回表",
+      "Using index"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "联合索引的最左前缀原则是什么？索引失效的常见场景？",
+    "tags": [
+      "MySQL",
+      "联合索引",
+      "最左前缀",
+      "索引失效"
+    ],
+    "reference_answer": "最左前缀：联合索引(a,b,c)相当于建了(a)/(a,b)/(a,b,c)三个索引。失效场景：索引列使用函数(WHERE YEAR(time)=2024)；隐式类型转换(varchar传int)；LIKE'%xxx'左模糊；OR连接非索引列；优化器选全表扫描。诊断：explain看type(ALL全表)/key(实际索引)/rows。原则：索引跟着查询走不是越多越好。",
+    "key_points": [
+      "最左列开始",
+      "函数/类型转换/左模糊/OR",
+      "explain诊断",
+      "优化器影响",
+      "跟着查询走"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "MySQL 的事务隔离级别有哪些？InnoDB 默认是什么？MVCC 怎么实现的？",
+    "tags": [
+      "MySQL",
+      "事务",
+      "MVCC",
+      "隔离级别"
+    ],
+    "reference_answer": "四个级别：RU(脏读)/RC(不可重复读)/RR(InnoDB默认/大部分解决幻读)/Serializable(最差性能)。MVCC：每行trx_id+roll_pointer隐藏字段；ReadView事务开始时生成快照记录活跃事务列表；沿undo log版本链找可见版本。RC每次SELECT新ReadView；RR第一次SELECT时生成。幻读：快照读不幻读；当前读靠Next-Key Lock防。",
+    "key_points": [
+      "RR默认",
+      "trx_id+roll_pointer",
+      "ReadView快照",
+      "undo log版本链",
+      "Next-Key Lock防幻读"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "MySQL 的锁机制有哪些？行锁、间隙锁、Next-Key Lock 分别锁什么？",
+    "tags": [
+      "MySQL",
+      "锁",
+      "行锁",
+      "间隙锁",
+      "Next-Key Lock"
+    ],
+    "reference_answer": "行锁(Record Lock)锁单条记录。间隙锁(Gap Lock)锁记录间间隙防插入。Next-Key Lock=行锁+间隙锁InnoDB默认方式防幻读。RR级别规则：等值命中→行锁；等值未命中→间隙锁；范围查询→Next-Key Lock。死锁：两事务互相等待对方行锁。解决：固定加锁顺序+缩小事务范围+show engine innodb status分析死锁。",
+    "key_points": [
+      "Record/Gap/Next-Key",
+      "防幻读",
+      "加锁规则",
+      "死锁分析",
+      "固定加锁顺序"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "MySQL 慢查询怎么排查和优化？你的完整流程是什么？",
+    "tags": [
+      "MySQL",
+      "慢查询",
+      "explain",
+      "优化"
+    ],
+    "reference_answer": "第一步发现：开启slow_query_log设long_query_time阈值或用监控平台告警。第二步分析：explain看type(ALL/index/range/ref/const)/rows/Extra(filesort/temporary是危险信号)。第三步优化：缺索引加索引/索引失效改写SQL/覆盖索引消回表；SELECT*改具体字段/子查询改JOIN/深分页改游标。第四步验证：重新explain对比rows和type/压测确认延迟降。",
+    "key_points": [
+      "slow_query_log",
+      "explain type/rows/Extra",
+      "索引优化",
+      "SQL改写",
+      "压测验证"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "MySQL 主从复制的原理是什么？延迟怎么解决？",
+    "tags": [
+      "MySQL",
+      "主从复制",
+      "Binlog",
+      "延迟"
+    ],
+    "reference_answer": "原理：主库写Binlog→从库IO Thread拉取Binlog写Relay Log→从库SQL Thread回放Relay Log执行变更。复制模式：异步(不等可能丢数据)/半同步(等至少一个从确认)/组复制(MGR多主强一致)。延迟原因：从库单线程回放/大事务/从库硬件差/网络延迟。解决：基于组提交并行复制(5.7+)/拆分大事务/从库硬件对齐/读写分离检测延迟超阈路由主库。",
+    "key_points": [
+      "Binlog→Relay Log→回放",
+      "异步vs半同步vs MGR",
+      "并行复制WRITESET",
+      "大事务拆分",
+      "延迟检测路由"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "分库分表的策略有哪些？什么时候该分？分片键怎么选？",
+    "tags": [
+      "MySQL",
+      "分库分表",
+      "分片键"
+    ],
+    "reference_answer": "垂直分：按业务拆分解决单库连接数和表数量瓶颈。水平分：按规则拆分(user_id%16→16张表)解决千万级以上数据量。何时分：单表超2000万且查询变慢/单库连接数QPS到瓶颈。能不分先读写分离/归档/优化索引。分片键选择：高频查询条件/数据分布均匀/避免跨分片。代价：跨分片JOIN困难/分布式事务复杂/全局ID需额外方案。",
+    "key_points": [
+      "垂直vs水平分",
+      "2000万+考虑分",
+      "先读写分离归档",
+      "分片键高频+均匀",
+      "跨分片JOIN难"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "MySQL 的 Buffer Pool 是什么？怎么调优？",
+    "tags": [
+      "MySQL",
+      "Buffer Pool",
+      "内存"
+    ],
+    "reference_answer": "Buffer Pool是InnoDB内存缓存区缓存数据页和索引页减少磁盘IO。默认128MB生产通常物理内存60-75%。关键参数：innodb_buffer_pool_size/innodb_buffer_pool_instances(分片减锁竞争)。调优：SHOW ENGINE INNODB STATUS看命中率目标>99%；命中率低=内存不够或查询模式不适合；LRU改进(young/old区防全表扫描冲刷)。先确保热数据能装进Buffer Pool。",
+    "key_points": [
+      "数据索引页缓存",
+      "60-75%物理内存",
+      "instances分片",
+      "命中率>99%",
+      "young/old防冲刷"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "MySQL 的 Redo Log、Undo Log、Binlog 各自的作用？",
+    "tags": [
+      "MySQL",
+      "Redo Log",
+      "Undo Log",
+      "Binlog"
+    ],
+    "reference_answer": "Redo Log(InnoDB层)：记录物理修改保证crash-safe持久性，WAL先写日志再写数据页。Undo Log(InnoDB层)：记录修改前旧值用于回滚和MVCC多版本读。Binlog(Server层)：记录逻辑变更(SQL或行变更)用于主从复制和数据恢复。两阶段提交：Redo prepare→写Binlog→Redo commit保证两日志一致crash恢复不丢不重。理解三者关系才能理解crash安全和主从一致性。",
+    "key_points": [
+      "Redo持久crash-safe",
+      "Undo回滚MVCC",
+      "Binlog复制恢复",
+      "两阶段提交",
+      "crash安全主从一致"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "MySQL 深分页问题怎么解决？",
+    "tags": [
+      "MySQL",
+      "深分页",
+      "游标"
+    ],
+    "reference_answer": "问题：LIMIT 1000000,10扫描前100万行再丢弃越深越慢。方案一游标分页：WHERE id>last_id ORDER BY id LIMIT 10利用主键索引每次只扫10行(需有序且客户端传ID)。方案二子查询：先查ID再回表减少回表次数。方案三搜索引擎：超大型交给ES MySQL只做精确查找。方案四业务限制：只能上一页/下一页。优先游标分页简单高效。",
+    "key_points": [
+      "游标WHERE id>last",
+      "子查询先ID再回表",
+      "ES辅助",
+      "业务限制",
+      "优先游标"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "MySQL 的大表 DDL（加列、加索引）怎么做才不影响线上？",
+    "tags": [
+      "MySQL",
+      "DDL",
+      "Online DDL",
+      "pt-osc"
+    ],
+    "reference_answer": "问题：ALTER TABLE默认锁表或长时间占资源。Online DDL(5.6+):ALGORITHM=INPLACE LOCK=NONE部分DDL不锁表但大表仍耗时。pt-online-schema-change：创建新表+触发器同步增量+拷贝存量+rename切换近乎无感。gh-ost：类似pt-osc用Binlog代替触发器对主库压力更小。大表DDL必须低峰执行+预估时间+准备回滚+监控主从延迟。",
+    "key_points": [
+      "Online DDL INPLACE",
+      "pt-osc触发器",
+      "gh-ost Binlog",
+      "低峰+预估+回滚",
+      "监控主从延迟"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "MySQL 的 count(*)、count(1)、count(字段) 有什么区别？",
+    "tags": [
+      "MySQL",
+      "count",
+      "性能"
+    ],
+    "reference_answer": "count(*)统计总行数包括NULL，优化器选最小二级索引计数避免回表。count(1)等价于count(*)性能相同。count(字段)统计该字段非NULL行数，无索引需全表扫描。性能：count(*)≈count(1)>count(有索引字段)>count(无索引字段)。统计总数用count(*)；需精确频繁的场景维护计数表或Redis计数。",
+    "key_points": [
+      "count(*)≈count(1)",
+      "优化器选最小索引",
+      "count字段非NULL",
+      "需频繁用计数表",
+      "Redis计数"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "MySQL 的索引下推（ICP）是什么？怎么利用它优化查询？",
+    "tags": [
+      "MySQL",
+      "ICP",
+      "索引下推"
+    ],
+    "reference_answer": "索引下推(5.6+)在存储引擎层就过滤不满足条件记录减少回表次数。例：联合索引(a,b)查WHERE a=1 AND b LIKE'%x%'，引擎在索引层检查b条件不满足直接跳过不回表。explain Extra显示Using index condition表示启用ICP。利用：过滤条件尽量放进联合索引；5.6+默认开启无需手动配置。",
+    "key_points": [
+      "引擎层过滤",
+      "减少回表",
+      "Using index condition",
+      "过滤放进联合索引",
+      "默认开启"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "MySQL 的自增 ID 在并发插入时有什么问题？怎么解决？",
+    "tags": [
+      "MySQL",
+      "自增ID",
+      "并发"
+    ],
+    "reference_answer": "问题：自增ID由innodb_autoinc_lock_mode控制锁粒度。高并发插入自增锁成为瓶颈；批量插入ID可能不连续；主从复制statement格式ID可能不一致。mode0表级锁最安全最慢；mode1默认连续插入轻量锁批量用表级锁；mode2所有用轻量锁ID可能不连续性能最好。分库分表后自增ID冲突需Snowflake/号段模式/Leaf等全局ID生成器。",
+    "key_points": [
+      "autoinc_lock_mode控制",
+      "0/1/2锁粒度",
+      "ID不连续",
+      "主从不一致",
+      "分库用Snowflake"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Redis 为什么快？单线程模型怎么处理高并发？",
+    "tags": [
+      "Redis",
+      "性能",
+      "单线程",
+      "IO多路复用"
+    ],
+    "reference_answer": "快的原因：纯内存操作纳秒级；单线程避免上下文切换和锁竞争；IO多路复用(epoll)大量连接；高效数据结构(SDS/ziplist/skiplist)；简单协议RESP。单线程处理高并发：命令执行单线程串行原子性；网络IO 6.0+多线程处理(socket读写)；命令执行仍单线程。单命令耗时过长(O(N)如KEYS*/大key DEL)会阻塞所有请求用SCAN替代KEYS/UNLINK替代DEL。",
+    "key_points": [
+      "纯内存纳秒",
+      "单线程无锁",
+      "epoll多路复用",
+      "6.0+IO多线程",
+      "避免O(N)阻塞"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Redis 的五种基本数据类型和底层数据结构？",
+    "tags": [
+      "Redis",
+      "数据类型",
+      "数据结构"
+    ],
+    "reference_answer": "String(SDS):缓存/计数器/分布式锁。Hash(ziplist/hashtable):对象存储/购物车。List(quicklist=ziplist+双向链表):消息队列(BRPOP)/时间线。Set(intset/hashtable):去重/共同好友。ZSet(ziplist/skiplist+hashtable):排行榜/延迟队列。进阶：HyperLogLog基数/Bitmap签到/Stream消息队列/GEO地理。选型根据访问模式不要只String存一切。",
+    "key_points": [
+      "String/List/Hash/Set/ZSet",
+      "SDS/ziplist/skiplist",
+      "quicklist",
+      "HyperLogLog/Bitmap",
+      "按访问模式选"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Redis 的持久化机制？RDB 和 AOF 怎么选？",
+    "tags": [
+      "Redis",
+      "持久化",
+      "RDB",
+      "AOF"
+    ],
+    "reference_answer": "RDB定时快照fork子进程二进制恢复快但可能丢最后快照后数据。AOF追加写命令日志everysec最多丢1秒数据文件大恢复慢需rewrite压缩。混合持久化(4.0+)RDB快照+增量AOF兼顾恢复速度和数据安全推荐生产。数据安全高→AOF everysec+混合持久化；性能优先→RDB；纯缓存→不开。fork大内存实例短暂卡顿；AOF rewrite低峰执行。",
+    "key_points": [
+      "RDB快照",
+      "AOF日志everysec",
+      "混合持久化4.0+",
+      "fork卡顿",
+      "rewrite低峰"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Redis 的过期策略和内存淘汰策略？",
+    "tags": [
+      "Redis",
+      "过期策略",
+      "内存淘汰"
+    ],
+    "reference_answer": "过期策略：惰性删除(访问时检查)+定期删除(每100ms随机抽样检查一批)。内存淘汰(maxmemory-policy)：noeviction拒绝写入；allkeys-lru最久未访问(缓存推荐)；volatile-lru只从有过期时间key淘汰；allkeys-lfu最不经常使用(4.0+更智能)；volatile-ttl淘汰剩余TTL最短。缓存用allkeys-lru/lfu；有明确过期策略用volatile-lru。",
+    "key_points": [
+      "惰性+定期删除",
+      "allkeys-lru推荐",
+      "allkeys-lfu更智能",
+      "noeviction拒绝",
+      "根据场景选"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Redis 的缓存穿透、缓存击穿、缓存雪崩分别是什么？",
+    "tags": [
+      "Redis",
+      "缓存穿透",
+      "缓存击穿",
+      "缓存雪崩"
+    ],
+    "reference_answer": "穿透(查不存在数据)→布隆过滤器+缓存空值短TTL+参数校验。击穿(热点key过期)→互斥锁只让一个请求回源+逻辑过期异步更新+永不过期主动更新。雪崩(大量key同时过期或Redis宕机)→随机偏移TTL+多级缓存(本地+Redis)+限流降级+Redis高可用。核心：缓存和DB之间加保护层永远别让所有流量直接到DB。",
+    "key_points": [
+      "穿透:布隆+空值",
+      "击穿:互斥锁+逻辑过期",
+      "雪崩:随机TTL+多级",
+      "高可用",
+      "流量保护"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Redis 分布式锁怎么实现？Redisson 的看门狗机制是什么？",
+    "tags": [
+      "Redis",
+      "分布式锁",
+      "Redisson",
+      "看门狗"
+    ],
+    "reference_answer": "基本实现：SET key value NX EX timeout原子加锁；Lua脚本判断value后DEL释放。问题：业务超锁时间锁自动过期其他线程拿锁。Redisson看门狗：加锁不指定超时默认30s；后台线程每10s(1/3超时)检查是否还锁持有则续期到30s；业务完成主动释放停止续期。RedLock跨多Redis实例加锁但时钟跳跃争议大生产中极少用。锁粒度细+合理超时兜底+获取失败快速失败或重试。",
+    "key_points": [
+      "SET NX EX原子",
+      "Lua释放",
+      "看门狗自动续期",
+      "RedLock争议",
+      "粒度细超时兜底"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Redis Cluster 的数据分片原理？节点扩缩容怎么做？",
+    "tags": [
+      "Redis",
+      "Cluster",
+      "分片",
+      "扩缩容"
+    ],
+    "reference_answer": "分片：16384个hash slot，CRC16(key)%16384映射slot分配到不同节点。路由：MOVED重定向(key不在当前节点)；ASK重定向(slot迁移中)。扩容：新节点加入→迁移部分slot(按slot粒度迁移key)→更新集群元数据。缩容：目标节点slot迁到其他节点→移除节点。迁移期间该slot读写可能有短暂延迟；不支持跨slot多key操作(用hash tag{}强制同slot)；Cluster只db0。",
+    "key_points": [
+      "16384 slot",
+      "CRC16映射",
+      "MOVED/ASK重定向",
+      "slot粒度迁移",
+      "hash tag同slot"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Redis 的 Pipeline 和 Lua 脚本各自解决什么问题？",
+    "tags": [
+      "Redis",
+      "Pipeline",
+      "Lua"
+    ],
+    "reference_answer": "Pipeline批量发送命令减少网络RTT。100命令1次RTT但不保证原子性。Lua多条命令在Redis服务端原子执行适合限流计数/库存扣减。只是批量不需要原子性→Pipeline；需要原子性多步→Lua。Lua执行太长阻塞Redis；脚本不要太复杂；EVALSHA缓存脚本减少传输。",
+    "key_points": [
+      "Pipeline减RTT",
+      "Lua原子性",
+      "批量vs原子",
+      "阻塞风险",
+      "EVALSHA缓存"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Redis 的大 key 问题怎么发现和解决？",
+    "tags": [
+      "Redis",
+      "大key",
+      "优化"
+    ],
+    "reference_answer": "危害：阻塞其他命令；网络带宽打满；内存不均Cluster；删除阻塞(DEL大key)。发现：redis-cli --bigkeys扫描；MEMORY USAGE查单key大小；RDB分析rdb-tools；监控告警。解决：拆分(大Hash按字段范围拆多个小Hash)；压缩(序列化后压缩再存)；异步删除(UNLINK替代DEL)；设上限(规范String<10KB/集合<5000)。开发规范Code Review检查。",
+    "key_points": [
+      "--bigkeys",
+      "MEMORY USAGE",
+      "rdb-tools",
+      "拆分/压缩/UNLINK",
+      "开发规范上限"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Redis 的 Stream 数据类型怎么用作消息队列？和 Kafka 比有什么局限？",
+    "tags": [
+      "Redis",
+      "Stream",
+      "消息队列",
+      "Kafka"
+    ],
+    "reference_answer": "Stream(5.0+)支持消费者组/ACK/持久化。XADD生产/XREADGROUP消费/XACK确认。优势：轻量/部署简单/消费者组支持pending重投。局限：单实例吞吐有限10万级；不支持Partition(水平扩展靠Cluster但Stream不能跨slot)；消息积压内存压力大；生态不如Kafka。轻量异步/通知用Stream；高吞吐/大数据管道/长期存储用Kafka。",
+    "key_points": [
+      "XADD/XREADGROUP/XACK",
+      "消费者组",
+      "吞吐10万级",
+      "不能跨slot",
+      "轻量用Stream重量用Kafka"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Redis 的热 key 问题怎么解决？",
+    "tags": [
+      "Redis",
+      "热key",
+      "本地缓存"
+    ],
+    "reference_answer": "问题：某key极高QPS访问单Redis节点成瓶颈。方案一本地缓存：Caffeine/Guava Cache缓存热key减少Redis访问最简单有效。方案二读写分离：热key复制多从节点读分散。方案三key拆分：一个key拆N个副本随机选分散到不同节点。方案四Proxy层：代理检测热key自动本地缓存。方案一最简单有效适合多数场景；配合--hotkeys或代理统计及时发现。",
+    "key_points": [
+      "本地缓存Caffeine",
+      "读写分离副本",
+      "key拆分N个",
+      "Proxy检测",
+      "--hotkeys发现"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Redis 的哨兵模式和 Cluster 模式怎么选？",
+    "tags": [
+      "Redis",
+      "哨兵",
+      "Cluster",
+      "选型"
+    ],
+    "reference_answer": "哨兵(Sentinel)一主多从+哨兵监控自动故障转移，客户端单主写入不能水平扩展。数据<16GB/QPS<10万→哨兵运维简单。Cluster多主多从数据分片写入存储水平扩展。数据>16GB或QPS>10万→Cluster。注意Cluster客户端需支持集群协议；Lua和多key受slot限制。",
+    "key_points": [
+      "哨兵单主故障转移",
+      "Cluster多主分片",
+      "<16GB/QPS<10万哨兵",
+      ">16GB或>10万Cluster",
+      "slot限制"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Redis 的内存碎片怎么产生？怎么清理？",
+    "tags": [
+      "Redis",
+      "内存碎片",
+      "优化"
+    ],
+    "reference_answer": "产生：频繁增删不同大小key内存分配器jemalloc无法复用已释放空间。度量：mem_fragmentation_ratio=used_memory_rss/used_memory>1.5碎片较多。清理：4.0+自动碎片整理activedefrag yes；手动MEMORY PURGE释放jemalloc空闲页；极端重启或主从切换。预防：避免频繁变更key大小；合理maxmemory；定期监控碎片率。",
+    "key_points": [
+      "jemalloc碎片",
+      "ratio>1.5",
+      "activedefrag",
+      "MEMORY PURGE",
+      "避免频繁变大小"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Redis 的 Lua 脚本和事务（MULTI/EXEC）有什么区别？",
+    "tags": [
+      "Redis",
+      "Lua",
+      "事务"
+    ],
+    "reference_answer": "MULTI/EXEC命令入队一次性执行中间不插其他命令。但不支持条件判断；错误处理弱(语法错误全回滚运行时错误不回滚)。Lua支持条件循环复杂逻辑；原子执行；可访问多key做复合操作。简单批量用MULTI/EXEC；需条件逻辑或复合原子用Lua。Redis7.0引入Function替代Lua推荐方式。",
+    "key_points": [
+      "MULTI/EXEC批量",
+      "不支持条件",
+      "Lua条件+原子",
+      "运行时错误不回滚",
+      "7.0 Function"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Redis 的布隆过滤器怎么实现？有什么局限？",
+    "tags": [
+      "Redis",
+      "布隆过滤器",
+      "缓存穿透"
+    ],
+    "reference_answer": "实现：RedisBloom模块(BF.ADD/BF.EXISTS)或Bitmap手动实现。特点：\"一定不存在\"准确；\"可能存在\"有误判率(false positive)。不支持删除(Counting Bloom Filter支持但占空间)。场景：缓存穿透防护拦截不存在key；爬虫URL去重；推荐去重。局限：有误判率1-3%；不能删除；容量固定超负荷误判飙升。参数：预期元素n+可接受误判p→自动算位数组大小和哈希函数数。",
+    "key_points": [
+      "BF.ADD/BF.EXISTS",
+      "一定不存在准确",
+      "可能存在误判",
+      "不支持删除",
+      "穿透防护"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "MongoDB 和 MySQL 怎么选？什么场景适合用 MongoDB？",
+    "tags": [
+      "MongoDB",
+      "MySQL",
+      "选型"
+    ],
+    "reference_answer": "MongoDB适合：文档结构灵活Schema不固定；嵌套数据多(评论/日志)；读写吞吐高一致性可放宽；快速迭代不需要频繁改表结构。MySQL适合：强事务需求；复杂关联查询；数据关系明确稳定；金融强一致场景。关系型数据用关系型，文档型数据用文档型；混用常见(MySQL核心交易+MongoDB日志/内容)。",
+    "key_points": [
+      "Schema灵活",
+      "嵌套数据",
+      "快速迭代",
+      "MySQL强事务",
+      "混用常见"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "MongoDB 的索引策略和 MySQL 有什么异同？",
+    "tags": [
+      "MongoDB",
+      "索引",
+      "对比"
+    ],
+    "reference_answer": "相同：B+树(变体)；复合索引最左前缀；覆盖索引避免回表。不同：MongoDB支持数组索引(multikey)/全文索引/地理空间索引/TTL索引(自动过期)。explain()分析避免COLLSCAN；复合索引ESR原则(Equality→Sort→Range)；索引数<20。",
+    "key_points": [
+      "B+树变体",
+      "multikey数组",
+      "TTL自动过期",
+      "ESR原则",
+      "<20索引"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "MongoDB 的分片（Sharding）原理和注意事项？",
+    "tags": [
+      "MongoDB",
+      "Sharding",
+      "分片"
+    ],
+    "reference_answer": "架构：mongos(路由)+config server(元数据)+shard(数据节点每shard副本集)。分片键：哈希(均匀范围查询需广播)；范围(支持范围可能热点)。注意：分片键不可变；避免单调递增分片键(如ObjectId导致写入集中一shard)；跨shard查询差；Jumbo chunk需手动拆分。数据<100GB优先副本集+垂直扩容超过再分片。",
+    "key_points": [
+      "mongos+config+shard",
+      "哈希vs范围",
+      "分片键不可变",
+      "避免单调递增",
+      "<100GB先不分"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "MongoDB 的事务支持到什么程度？和 MySQL 事务有什么区别？",
+    "tags": [
+      "MongoDB",
+      "事务",
+      "ACID"
+    ],
+    "reference_answer": "4.0+多文档ACID(副本集)；4.2+分片集群事务。vs MySQL：MongoDB事务是补充非默认(设计鼓励单文档原子)；性能开销比MySQL大；不支持所有隔离级别(默认snapshot)。能通过文档建模避免跨文档事务就避免；确实需要才用；事务内操作尽量少避免长持锁。",
+    "key_points": [
+      "4.0+多文档ACID",
+      "补充非默认",
+      "单文档优先",
+      "性能开销大",
+      "snapshot隔离"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "MongoDB 的数据建模：嵌入 vs 引用怎么选？",
+    "tags": [
+      "MongoDB",
+      "建模",
+      "嵌入",
+      "引用"
+    ],
+    "reference_answer": "嵌入子文档在父文档内：一次读获取所有但文档16MB限制更新子文档可能重写整文档。引用存ID用$lookup关联：数据独立更新但需额外查询。一对少/读多写少/数据一起访问→嵌入；一对多且多很大/子数据独立更新频繁→引用。经典：文章+评论(少量嵌入)；用户+订单(引用)；地址嵌入用户。",
+    "key_points": [
+      "嵌入一次读",
+      "引用独立更新",
+      "16MB限制",
+      "$lookup查询",
+      "按读写模式选"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Elasticsearch 的倒排索引原理是什么？为什么全文搜索快？",
+    "tags": [
+      "ES",
+      "倒排索引",
+      "全文搜索"
+    ],
+    "reference_answer": "正排：文档ID→内容搜索需遍历所有文档。倒排：词项(term)→包含该词文档ID列表(posting list)搜索直接通过词项定位文档。构建：文档→分词器→词项→写入倒排索引。查询：查询词→分词→查倒排索引→交集/并集→BM25评分排序。快的原因：不用遍历所有文档直接O(1)定位；posting list压缩(FST/PFOR)减内存加速交集。",
+    "key_points": [
+      "词项→文档列表",
+      "分词→倒排",
+      "O(1)定位",
+      "BM25评分",
+      "FST压缩"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "ES 的写入流程是怎样的？为什么写入不是实时的？",
+    "tags": [
+      "ES",
+      "写入",
+      "refresh"
+    ],
+    "reference_answer": "流程：文档→路由shard→写入Index Buffer(内存)→每1秒refresh到Segment(可搜索)→每30分钟或512MB flush到磁盘。不是实时因为refresh之前数据在内存buffer不可搜索这是吞吐和实时性权衡。调优：实时搜索refresh_interval=100ms；批量写入关闭refresh和replica写完恢复。segment不可变删除是标记merge时真释放。",
+    "key_points": [
+      "Index Buffer→refresh→flush",
+      "1秒可见延迟",
+      "refresh_interval调优",
+      "批量关闭refresh",
+      "segment不可变"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "ES 和 MySQL 数据同步怎么做？",
+    "tags": [
+      "ES",
+      "MySQL",
+      "数据同步",
+      "Canal"
+    ],
+    "reference_answer": "方案一双写业务代码同时写MySQL和ES简单但一致性难保证。方案二Canal/Debezium监听Binlog→解析变更→写入ES解耦业务无侵入推荐。方案三定时全量增量同步简单但延迟高适合实时性低。生产用方案二(Canal+Kafka+ES Consumer)；注意ES写入幂等文档ID去重；同步延迟监控。",
+    "key_points": [
+      "双写一致性差",
+      "Canal监听Binlog推荐",
+      "定时同步延迟高",
+      "幂等写入",
+      "延迟监控"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "ES 的查询性能优化有哪些手段？",
+    "tags": [
+      "ES",
+      "查询优化",
+      "性能"
+    ],
+    "reference_answer": "索引：合理mapping(keyword vs text)；关闭不需要_source/字段索引；filter代替query(filter缓存不算分)。查询：避免wildcard前缀模糊；深分页search_after代替from+size；routing减少搜索shard数。集群：shard大小10-50GB；冷热分离(热SSD冷HDD)；replica平衡读写。先profile查询耗时分布再针对性优化。",
+    "key_points": [
+      "filter代替query",
+      "keyword vs text",
+      "search_after深分页",
+      "routing",
+      "冷热分离"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "ES 的集群架构？Master 节点和 Data 节点的职责？",
+    "tags": [
+      "ES",
+      "集群",
+      "Master",
+      "Data"
+    ],
+    "reference_answer": "Master节点：管理集群元数据(索引创建删除/shard分配/节点加入退出)不处理数据读写轻量级。Data节点：存储数据执行搜索聚合IO/CPU/内存密集。Coordinating节点：接收请求转发到Data节点聚合结果返回。Ingest节点：数据预处理(pipeline)。生产Master和Data分离Master 3专用节点；Data按存储和计算配置；避免Master承担数据压力。",
+    "key_points": [
+      "Master元数据轻量",
+      "Data存储搜索计算",
+      "Coordinating转发聚合",
+      "Master/Data分离",
+      "3 Master节点"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "如何设计一个订单系统的数据库模型？核心表有哪些？",
+    "tags": [
+      "数据库设计",
+      "订单系统",
+      "建模"
+    ],
+    "reference_answer": "核心表：订单主表(order_id/user_id/status/total_amount/create_time)；订单明细(sku_id/quantity/price)；支付(payment_id/channel/status)；物流(logistics_id/carrier/tracking_no)。设计：全局唯一ID非自增为分库分表准备；状态tinyint+枚举注释；金额decimal不float；冗余商品快照防商品修改影响历史订单；索引覆盖高频查询(user_id+status/create_time)。扩展:垂直拆分/水平分表/历史归档ES。",
+    "key_points": [
+      "四核心表",
+      "全局唯一ID",
+      "decimal金额",
+      "冗余快照",
+      "索引高频查询"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "什么时候该用缓存，什么时候直接查数据库？",
+    "tags": [
+      "缓存",
+      "数据库",
+      "选型"
+    ],
+    "reference_answer": "用缓存：读多写少(>10:1)；QPS>1000；容忍短暂不一致(秒级)。直接查库：写多读少；一致性强要求(余额)；数据小且查询简单(<1ms)；访问频率低缓存命中率低。不为缓存而缓存。先量化QPS和延迟再决定是否引入缓存层。",
+    "key_points": [
+      "读写比>10:1",
+      "QPS>1000",
+      "容忍不一致",
+      "强一致查库",
+      "先量化再决定"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "关系型数据库和 NoSQL 的本质区别是什么？CAP 定理怎么理解？",
+    "tags": [
+      "关系型",
+      "NoSQL",
+      "CAP"
+    ],
+    "reference_answer": "关系型强调结构和一致性(Schema/ACID/JOIN)；NoSQL强调灵活性和可扩展性(Schema-free/最终一致/水平扩展)。CAP：最多同时满足两个。P在分布式中不可避免所以实际是CP(牺牲可用保一致如ZooKeeper)或AP(牺牲一致保可用如Eureka)。不要教条理解CAP：大多数系统在P发生时选择偏向C还是A；正常运行时C和A都能兼顾。",
+    "key_points": [
+      "结构vs灵活",
+      "ACID vs 最终一致",
+      "CP或AP",
+      "P不可避免",
+      "正常C+A兼顾"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "如何设计一个多租户系统的存储方案？",
+    "tags": [
+      "多租户",
+      "存储",
+      "SaaS"
+    ],
+    "reference_answer": "三模式：独立数据库(每租户一库隔离最强运维成本高适合大客户)；共享数据库独立Schema(平衡隔离和成本适合中型)；共享表+tenant_id(成本最低隔离弱必须查询带tenant_id适合SaaS大量小租户)。关键：代码层必须有租户上下文(中间件自动注入tenant_id)防止数据串台。",
+    "key_points": [
+      "独立库/独立Schema/共享表",
+      "tenant_id",
+      "中间件注入",
+      "隔离vs成本",
+      "防串台"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "时序数据库（InfluxDB/TimescaleDB）适合什么场景？",
+    "tags": [
+      "时序数据库",
+      "InfluxDB",
+      "TimescaleDB"
+    ],
+    "reference_answer": "适合：监控指标(CPU/QPS)/IoT传感器/金融行情。特点写多读少/按时间范围查询/数据有TTL。vs MySQL：时序库列式存储高压缩比自动降采样TTL自动过期；MySQL通用行存储大量时间序列写入差/存储效率低。亿级以上时间维度→时序库；小量或需JOIN→MySQL；已有PG→TimescaleDB插件兼容SQL。",
+    "key_points": [
+      "监控/IoT/行情",
+      "写多读少",
+      "列式高压缩",
+      "自动TTL",
+      "TimescaleDB PG插件"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "对象存储（S3/OSS/MinIO）适合存什么？和数据库存文件有什么区别？",
+    "tags": [
+      "对象存储",
+      "S3",
+      "MinIO",
+      "文件存储"
+    ],
+    "reference_answer": "适合图片/视频/文档/日志归档/备份等不可变大文件。vs数据库存文件：无限量扩展成本低/CDN加速分发；数据库存BLOB导致膨胀/备份恢复慢/无法CDN。文件存对象存储数据库只存URL/Key；签名URL控制访问；大文件分片上传；生命周期自动转冷存储。不支持修改只能覆盖；不适合频繁小文件(用Redis/DB)。",
+    "key_points": [
+      "大文件存对象",
+      "DB存URL",
+      "签名URL",
+      "分片上传",
+      "生命周期冷存储"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "如何设计一个全局唯一 ID 生成方案？不同方案的取舍？",
+    "tags": [
+      "分布式ID",
+      "Snowflake",
+      "UUID",
+      "号段"
+    ],
+    "reference_answer": "UUID本地生成无依赖但无序索引差占空间大适合不关心顺序。数据库自增简单有序但单点瓶颈分库冲突。号段模式(Leaf-segment)批量取号段高性能趋势递增需DB依赖。雪花(Snowflake)64位=时间戳+机器ID+序列号高性能趋势递增无外部依赖但时钟回拨风险。趋势递增高性能→雪花/号段；简单→UUID v7时间有序；分库→号段或雪花。",
+    "key_points": [
+      "UUID无序",
+      "DB自增单点",
+      "号段批量",
+      "Snowflake时钟",
+      "UUID v7有序"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "数据归档策略怎么设计？什么时候该归档？",
+    "tags": [
+      "数据归档",
+      "冷热分离"
+    ],
+    "reference_answer": "何时：数据有明确生命周期(订单6月后不活跃)；热表数据量影响查询性能；合规保留但不需在线访问。策略：按时间(N月前移到归档表冷存储)/按状态(已关闭归档)/按访问频率(90天未访问转冷)。实现：定时任务批量迁移避免锁表；归档后原表删除；归档可查但延迟容忍(放ES/Hive/对象存储)。归档前确认无业务依赖；保留回滚能力；审计日志。",
+    "key_points": [
+      "按时间/状态/频率",
+      "定时批量迁移",
+      "归档可查延迟容忍",
+      "回滚能力",
+      "审计日志"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "多数据源场景下如何保证数据一致性？",
+    "tags": [
+      "数据一致性",
+      "分布式事务",
+      "Saga"
+    ],
+    "reference_answer": "强一致：分布式事务(Seata AT/TCC/XA)性能差适合金融。最终一致：本地消息表(业务+消息同事务→异步投递→消费幂等)；事务消息(RocketMQ半消息)；Saga(正向+补偿操作)。能用最终一致不用强一致；消息可靠投递重试+死信；消费端必须幂等；对账机制兜底定时比对两端数据。一致性的代价是性能和复杂度按业务容忍度选择。",
+    "key_points": [
+      "Seata强一致",
+      "本地消息表最终",
+      "RocketMQ事务消息",
+      "Saga补偿",
+      "对账兜底"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "如何评估一个存储方案是否适合你的业务？",
+    "tags": [
+      "存储选型",
+      "评估"
+    ],
+    "reference_answer": "评估维度：数据模型(结构化/半/非)；读写模式(QPS/延迟)；一致性(强/最终)；扩展性(增速/水平)；运维成本(熟悉度/社区/云支持)；成本(存储/计算/人力)。方法：先明确业务需求量化指标→对比候选方案→POC验证真实数据跑基准。没有最好只有最合适。避免技术驱动选型要业务驱动。",
+    "key_points": [
+      "数据模型/读写/一致性",
+      "扩展性/运维/成本",
+      "量化需求",
+      "POC验证",
+      "业务驱动"
+    ]
   }
 ]
