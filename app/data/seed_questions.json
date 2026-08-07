@@ -831,5 +831,100 @@
       "终止条件设计",
       "共享State协调"
     ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "如何提高 RAG 的召回率和准确率？",
+    "tags": [
+      "RAG",
+      "优化",
+      "召回率"
+    ],
+    "reference_answer": "RAG 效果差问题可能出在切分、检索、排序任一环，按流程分阶段优化：1) 优化文档切分——按语义或结构切而非固定长度，加块间重叠保证上下文不断裂，给每块补标题摘要等元信息；2) 混合检索——向量检索+关键词检索(BM25)结合，两者取长补短提高召回率；3) 重排——检索先粗召回一批，再用 Rerank 模型精排选出最相关的几个；4) 兜底和评估——检索不到明确告诉用户没找到不让模型硬编，线下用评测集分别测检索质量和答案质量。",
+    "key_points": [
+      "语义切分vs固定长度",
+      "混合检索(向量+BM25)",
+      "Rerank精排",
+      "检索空结果兜底",
+      "评测集分离测试"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "你的 Agent 是如何管理多轮对话的？",
+    "tags": [
+      "Agent",
+      "对话管理",
+      "Session"
+    ],
+    "reference_answer": "核心矛盾：让模型记住前面聊过什么又不能无限塞上下文。做法：1) messages 列表存对话历史，每轮 user/assistant 消息按序追加，工具调用的 Agent 也把工具调用和返回作为消息存进去保证推理链完整；2) session_id 做会话隔离，不同用户不同会话各自维护历史，存在内存或 Redis 中按 session 读写互不串台；3) 控制长度防 token 爆炸，超长时做摘要或裁剪旧消息；4) 持久化到数据库或向量库，支持关掉再打开接着聊。",
+    "key_points": [
+      "messages列表管理",
+      "session_id隔离",
+      "token长度控制",
+      "Redis/内存vs持久化",
+      "工具调用消息记录"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "你如何做意图识别？",
+    "tags": [
+      "意图识别",
+      "路由",
+      "分类"
+    ],
+    "reference_answer": "意图识别搞清用户想干嘛然后路由到对应处理流程。方案按复杂程度来：1) 意图固定且不多用 LLM 分类——候选意图列 prompt 里，用 JSON Schema 约束输出成固定枚举值，简单任务用小模型又快又便宜；2) 意图多或易混加检索——意图几十上百种时先把用户 query 向量化去意图库检索最相近的几个候选再交模型判定；3) 处理模糊和多意图——表达不清追问澄清不硬猜，一句话多意图做多标签识别拆成多个子任务分别处理。",
+    "key_points": [
+      "LLM分类+JSON Schema",
+      "小模型前置降成本",
+      "向量检索缩小候选",
+      "多标签识别",
+      "模糊意图追问"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "大模型调用工具时，怎么避免参数格式错误？",
+    "tags": [
+      "Function Calling",
+      "参数校验",
+      "容错"
+    ],
+    "reference_answer": "从事前约束、事中校验、事后纠正三环节防。1) 事前用 Function Calling 加 Schema 约束，给每个工具定义清晰的 JSON Schema(type/enum/required)不让模型在文本里瞎写；2) 事中用 JSON Schema 或 Pydantic 校验模型输出的参数，类型不对、缺必填、超出范围都能拦住；3) 事后错误反馈自纠——校验失败或接口报参数错误不直接崩，把具体错误信息作为工具返回喂回模型让它纠正重试；4) 兜底——重试设上限反复改还不对就降级或人工介入，必填参数缺了让 Agent 反问用户补齐。",
+    "key_points": [
+      "Schema约束(类型/枚举/必填)",
+      "Pydantic/JSON Schema校验",
+      "错误信息反馈自纠",
+      "重试上限+降级",
+      "反问用户补参数"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "什么场景该用 RAG，什么场景该用微调？",
+    "tags": [
+      "RAG",
+      "微调",
+      "选型"
+    ],
+    "reference_answer": "RAG 解决知识问题：适合私有、实时、需溯源的事实（公司文档、价格），外挂向量库检索，更新快成本低可溯源。微调解决能力问题：适合规范输出风格/格式/术语（固定JSON、客服话术），把能力炼入模型，但成本高更新难。一句话：缺事实用 RAG，缺风格用微调。多数知识问答先上 RAG。两者可结合——微调固定风格，RAG 喂最新事实。",
+    "key_points": [
+      "RAG=知识vs微调=能力",
+      "更新成本对比",
+      "可溯源vs既定风格",
+      "适用场景判断",
+      "RAG+微调结合"
+    ]
   }
 ]
