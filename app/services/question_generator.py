@@ -92,7 +92,11 @@ class QuestionGenerator:
                 min_similarity=SIM_THRESHOLD,
             )
             taken = 0
+            seen_contents = {q["content"] for q in bank_questions}
             for r in results:
+                if r.content in seen_contents:
+                    all_rag_context.append({"content": r.content, "metadata": r.metadata})
+                    continue
                 if r.score < SIM_THRESHOLD or taken >= needed:
                     all_rag_context.append({"content": r.content, "metadata": r.metadata})
                     continue
@@ -102,6 +106,7 @@ class QuestionGenerator:
                     "key_points": r.metadata.get("key_points", []),
                     "source": "bank", "bank_score": r.score,
                 })
+                seen_contents.add(r.content)
                 taken += 1
             # 剩余的该类型需要 LLM 生成
             type_counts[qtype] = needed - taken

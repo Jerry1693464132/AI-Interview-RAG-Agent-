@@ -251,16 +251,16 @@
     "question_type": "knowledge",
     "content": "请解释 AI Agent 的核心架构，包括感知、规划、工具调用、记忆模块的作用和关系",
     "tags": [
-      "CI/CD",
-      "自动化"
+      "AI Agent",
+      "架构"
     ],
-    "reference_answer": "lint/test → 构建 → 镜像打包 → staging → 测试 → 生产。关键：并行化、缓存、分阶段发布。",
+    "reference_answer": "AI Agent 核心架构包含四个模块：感知模块接收用户输入和环境信息；规划模块将复杂任务分解为可执行步骤；工具调用模块通过 Function Calling 与外部系统交互；记忆模块分为工作记忆、短期记忆、长期记忆三层管理上下文。",
     "key_points": [
-      "lint+test",
-      "构建缓存",
-      "分阶段部署",
-      "回滚策略",
-      "GitOps"
+      "感知-规划-执行-记忆四模块",
+      "ReAct推理循环",
+      "Function Calling机制",
+      "三层记忆架构",
+      "Agent与普通LLM的区别"
     ]
   },
   {
