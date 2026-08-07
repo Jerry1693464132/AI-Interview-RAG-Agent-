@@ -35,7 +35,7 @@ class InterviewSession(Base, UUIDMixin, TimestampMixin):
         UUID(as_uuid=True), ForeignKey("candidate_profiles.id", ondelete="SET NULL"), nullable=True
     )
 
-    question_count: Mapped[int] = mapped_column(Integer, default=5)
+    question_count: Mapped[int] = mapped_column(Integer, default=10)
     difficulty: Mapped[str] = mapped_column(String(20), default="medium")
     question_types: Mapped[list] = mapped_column(JSONB, default=list)
 

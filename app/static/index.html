@@ -109,7 +109,7 @@
     </div>
     <div class="form-group"><label>岗位描述</label><textarea id="jobDescription" rows="3" placeholder="如：负责微服务架构设计，要求熟悉 FastAPI、PostgreSQL、Docker、Kubernetes..."></textarea></div>
     <div class="form-row">
-      <div class="form-group"><label>题目数量</label><input type="number" id="questionCount" value="5" min="1" max="20"></div>
+      <div class="form-group"><label>题目数量</label><input type="number" id="questionCount" value="10" min="1" max="30"></div>
       <div class="form-group"><label>题目类型</label><div style="display:flex;gap:8px;padding:8px 0"><label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:14px"><input type="checkbox" value="knowledge" checked> 知识深度</label><label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:14px"><input type="checkbox" value="practice" checked> 工程实践</label><label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:14px"><input type="checkbox" value="soft_skill"> 软技能</label></div></div>
     </div>
     <button class="btn btn-primary" id="btnGenerate" onclick="generateQuestions()" disabled>🤖 生成面试题目</button>
@@ -251,7 +251,7 @@ async function generateQuestions(){
   const data={
     job_title:jobTitle,
     job_description:document.getElementById('jobDescription').value,
-    question_count:parseInt(document.getElementById('questionCount').value)||5,
+    question_count:parseInt(document.getElementById('questionCount').value)||10,
     difficulty:document.getElementById('difficulty').value,
     question_types:Array.from(document.querySelectorAll('#card-job input[type=checkbox]:checked')).map(c=>c.value),
     resume_id:currentResumeId,

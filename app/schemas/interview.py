@@ -13,7 +13,7 @@ class InterviewCreateRequest(BaseModel):
     resume_id: Optional[UUID] = None
     job_title: str = Field(..., min_length=1, max_length=200)
     job_description: Optional[str] = None
-    question_count: int = Field(default=5, ge=1, le=20)
+    question_count: int = Field(default=10, ge=1, le=30)
     difficulty: str = Field(default="medium", pattern="^(easy|medium|hard)$")
     question_types: list[str] = Field(default_factory=lambda: ["knowledge", "soft_skill"])
 
