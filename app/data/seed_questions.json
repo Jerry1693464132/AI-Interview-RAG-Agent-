@@ -5292,5 +5292,2140 @@
       "POC验证",
       "业务驱动"
     ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "CAP 定理的本质是什么？实际系统怎么取舍？",
+    "tags": [
+      "CAP",
+      "分布式",
+      "一致性"
+    ],
+    "reference_answer": "P不可避免的前提下系统只能在C和A间权衡。CP(ZooKeeper/etcd)分区时拒绝写入保一致；AP(Cassandra/Dynamo)分区时可读写但可能不一致。同一系统不同操作可不同选择(订单CP/浏览AP)。\"在P发生的短暂窗口内偏向C还是A\"才是真正的设计决策。",
+    "key_points": [
+      "P是前提不是选项",
+      "CP:强一致牺牲可用",
+      "AP:可用牺牲一致",
+      "同一系统可混合",
+      "P发生时偏C还是A"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "BASE 理论是什么？和 ACID 怎么共存？",
+    "tags": [
+      "BASE",
+      "ACID",
+      "分布式"
+    ],
+    "reference_answer": "BASE:Basically Available+Soft State+Eventually Consistent。CAP中AP的延伸。不是对立是互补：核心交易用ACID(扣款)；非核心用BASE(积分/通知)。最终一致不等于永远不一致需要有收敛机制(对账/补偿/重试)。",
+    "key_points": [
+      "基本可用+软状态+最终一致",
+      "ACID核心链路",
+      "BASE非核心",
+      "收敛机制"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "什么是一致性哈希？虚拟节点的作用？",
+    "tags": [
+      "一致性哈希",
+      "分布式"
+    ],
+    "reference_answer": "普通hash(key%N)增减节点几乎所有key需重映射。一致性哈希：哈希空间组织为环(0~2^32)，节点和key映射到环上顺时针查找。节点增减只影响相邻区间。虚拟节点：每物理节点映射多虚拟节点解决节点少时分布不均。Redis Cluster 16384 slot是其变体。",
+    "key_points": [
+      "哈希环",
+      "顺时针查找",
+      "只影响相邻区间",
+      "虚拟节点防不均",
+      "slot变体"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "分布式系统中的脑裂是什么？怎么防止？",
+    "tags": [
+      "脑裂",
+      "分布式",
+      "Raft"
+    ],
+    "reference_answer": "网络分区导致集群分裂为两子集各自选出Leader双写数据分歧。防止：多数派仲裁(获超半数才服务)；Fencing(旧Leader被STONITH强制关)；Lease(租约过期失信任)；Witness节点打破平票。etcd/ZK用Raft多数派。",
+    "key_points": [
+      "分区后各自选主",
+      "双写数据分歧",
+      "多数派仲裁",
+      "Fencing强制关",
+      "Lease租约"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Raft 共识算法的核心流程是什么？",
+    "tags": [
+      "Raft",
+      "共识算法",
+      "分布式"
+    ],
+    "reference_answer": "三种角色Leader/Follower/Candidate。Leader选举:Follower超时→变Candidate→请求投票→多数票当选。日志复制:请求→Leader追加日志→并行AppendEntries→多数确认后commit→应用状态机。安全性:Leader拥有所有已提交日志才能当选。vs Paxos:将共识拆为选举+复制+安全三子问题易理解实现。",
+    "key_points": [
+      "Leader/Follower/Candidate",
+      "超时触发选举",
+      "多数票当选",
+      "AppendEntries复制",
+      "多数确认commit"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "什么是背压（Back Pressure）？怎么处理？",
+    "tags": [
+      "背压",
+      "分布式",
+      "异步"
+    ],
+    "reference_answer": "下游处理速度跟不上上游生产时的反馈机制防系统崩溃。处理：有界队列满了拒绝；TCP滑动窗口/gRPC flow control/Reactive request(n)；令牌桶限流；熔断快速失败；降级丢弃非关键数据。每个异步环节都需要背压机制；无限队列是崩溃隐患。",
+    "key_points": [
+      "下游慢→上游减速",
+      "有界队列",
+      "Reactive flow control",
+      "熔断快速失败",
+      "无背压=崩溃隐患"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "什么是分布式追踪？Trace/Span 模型怎么工作？",
+    "tags": [
+      "分布式追踪",
+      "Trace",
+      "Span",
+      "OpenTelemetry"
+    ],
+    "reference_answer": "Trace:一次完整请求全局视图唯一TraceID。Span:Trace中一个操作单元(HTTP调用/DB查询)包含名称/时间/父SpanID/标签/状态。传播:W3C TraceContext(traceparent)跨服务传递。采样:高流量1-10%采样+错误强制采样。后端:Jaeger/Zipkin/Tempo/SkyWalking。价值:定位慢在哪一跳/关联日志/依赖拓扑。",
+    "key_points": [
+      "Trace=全局视图",
+      "Span=操作单元",
+      "W3C TraceContext传播",
+      "1-10%采样",
+      "慢在哪一跳"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "什么是幂等性？分布式系统为什么必须考虑？",
+    "tags": [
+      "幂等",
+      "分布式"
+    ],
+    "reference_answer": "同一操作执行一次和多次结果相同。必须原因：网络重试/消息重复/用户重复点击/超时重发——分布式\"恰好一次\"几乎不可能只能\"至少一次+幂等去重\"。实现：唯一键约束/去重表(RequestID)/状态机(只允许合法转换)/Token一次性/乐观锁(version)。写接口必须幂等；读接口天然幂等。",
+    "key_points": [
+      "网络重试致重复",
+      "至少一次+幂等",
+      "唯一键/去重表",
+      "状态机/Token",
+      "乐观锁version"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "服务发现：客户端发现 vs 服务端发现？",
+    "tags": [
+      "服务发现",
+      "微服务",
+      "注册中心"
+    ],
+    "reference_answer": "客户端发现:调用方从注册中心拉服务列表自行负载均衡(少一跳/灵活/每语言需SDK)。服务端发现:调用方请求LB(K8s Service/Envoy)由LB转发(调用方无感知/多一跳/LB可能瓶颈)。K8s Service+DNS是服务端发现；Headless+客户端选择是客户端发现。Service Mesh将发现下沉Sidecar应用无感。",
+    "key_points": [
+      "客户端:拉列表自均衡",
+      "服务端点:LB转发",
+      "K8s Service服务端发现",
+      "Service Mesh无感",
+      "一跳vs灵活"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "分布式系统中的故障模式有哪些？怎么设计容错？",
+    "tags": [
+      "故障模式",
+      "容错",
+      "分布式"
+    ],
+    "reference_answer": "故障类型:节点宕机/网络分区/拜占庭故障(错误恶意数据)/慢节点(不挂但极慢更难检测)。容错设计:冗余(多副本+多实例)/超时+重试(指数退避+限制次数)/熔断(连续失败快速失败)/优雅降级(关非核心保核心)。原则:假设一切都会失败；先想\"这个依赖挂了怎么办\"。",
+    "key_points": [
+      "宕机/分区/拜占庭/慢节点",
+      "多副本冗余",
+      "超时+指数退避",
+      "熔断快速失败",
+      "优雅降级"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "分布式缓存一致性：Cache Aside/Write Through/Write Behind？",
+    "tags": [
+      "分布式缓存",
+      "Cache Aside"
+    ],
+    "reference_answer": "Cache Aside:读先查缓存miss回填/写先更新DB再删缓存最常用。Write Through:写同步更新缓存和DB延迟高。Write Behind:写只更新缓存异步批量刷DB性能好但可能丢数据。经典问题:先删缓存再更新DB→并发读回填旧值。解决:延迟双删/Canal订阅Binlog异步删。",
+    "key_points": [
+      "Cache Aside最常用",
+      "先更新DB再删缓存",
+      "延迟双删防旧值",
+      "Canal异步删",
+      "Write Behind丢数据风险"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "数据分片（Sharding）策略有哪些？分片键怎么选？",
+    "tags": [
+      "分片",
+      "Sharding",
+      "分布式"
+    ],
+    "reference_answer": "Range按时间/ID区间(范围查询高效/最新数据热点)。Hash key%N或一致性哈希(均匀/范围查询需广播)。分片键原则:高频查询条件/分布均匀/不可变/避免跨分片JOIN。代价:跨分片查询复杂/分布式事务困难/扩容需迁移。单表超2000万+查询变慢考虑分。",
+    "key_points": [
+      "Range热点/Hash均匀",
+      "分片键高频+均匀",
+      "不可变",
+      "跨分片JOIN难",
+      "2000万+考虑"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "分布式 ID 方案对比：Snowflake vs UUID vs 号段？",
+    "tags": [
+      "分布式ID",
+      "Snowflake"
+    ],
+    "reference_answer": "UUID v4本地无依赖但无序(B+树差)占36B。UUID v7时间有序兼顾唯一和索引友好新趋势。Snowflake 64位=时间戳+机器ID+序列号高性能趋势递增风险时钟回拨。号段(Leaf-segment)批量取缓存高性能严格递增依赖DB。分布式DB主键→UUID v7/Snowflake；严格递增→号段；简单→UUID。",
+    "key_points": [
+      "UUID v4无序",
+      "UUID v7时间有序",
+      "Snowflake时钟回拨",
+      "号段严格递增",
+      "按场景选"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "分布式时钟问题怎么解决？HLC是什么？",
+    "tags": [
+      "分布式时钟",
+      "HLC",
+      "时钟同步"
+    ],
+    "reference_answer": "分布式节点时钟不同步不能依赖物理时间判事件顺序。逻辑时钟:Lamport全序不反映因果；Vector Clock能判因果关系但维度增。混合时钟HLC:结合物理时间+逻辑计数器兼顾精度和因果序。实践:多数业务\"时间+唯一ID\"排序即可；需因果序用TSO(Timestamp Oracle)或TrueTime(Spanner)。",
+    "key_points": [
+      "物理时间不可信",
+      "Lamport全序",
+      "Vector Clock因果",
+      "HLC物理+逻辑",
+      "TSO/TrueTime"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "本地消息表方案怎么实现最终一致性？",
+    "tags": [
+      "本地消息表",
+      "最终一致性",
+      "分布式事务"
+    ],
+    "reference_answer": "流程:业务操作+写消息表在同一本地事务(原子性保证)→后台定时任务轮询未发消息投递MQ→消费端处理回调确认→更新消息表已完成。优点:不依赖分布式事务/实现简单/持久化DB。缺点:有延迟(轮询间隔)/表需定期清理/消费端必须幂等。适用:跨服务异步通知(下单发积分/通知)。最实用的最终一致性方案。",
+    "key_points": [
+      "业务+消息同事务",
+      "轮询投递MQ",
+      "消费端幂等",
+      "有延迟",
+      "最实用方案"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "高并发系统的核心设计原则是什么？",
+    "tags": [
+      "高并发",
+      "系统设计"
+    ],
+    "reference_answer": "分层:接入层(CDN/LB)→应用层(无状态)→缓存层→数据层每层独立扩展。异步化:能异步不同步(MQ/事件驱动)。池化:连接池/线程池/对象池。无状态:应用层不存Session方便水平扩展。原则:先垂直优化(单机性能)再水平扩展(加机器)。过早分布式是万恶之源。",
+    "key_points": [
+      "分层独立扩展",
+      "异步削峰",
+      "池化复用",
+      "无状态可扩展",
+      "先垂直再水平"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "限流算法有哪些？令牌桶和漏桶的区别？",
+    "tags": [
+      "限流",
+      "令牌桶",
+      "漏桶"
+    ],
+    "reference_answer": "固定窗口简单但边界突刺。滑动窗口将窗口细分更平滑(Redis ZSET)。漏桶恒定速率流出削峰填谷但不允许突发。令牌桶恒定速率生成令牌允许突发最常用。分布式限流:Redis+Lua全局令牌桶；Sentinel/Hystrix应用内；API Gateway入口。多层限流；限流后友好响应429+Retry-After。",
+    "key_points": [
+      "固定窗口边界突刺",
+      "滑动窗口更平滑",
+      "漏桶不允许突发",
+      "令牌桶允许突发",
+      "429+Retry-After"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "熔断器的三种状态是什么？怎么配置？",
+    "tags": [
+      "熔断",
+      "Circuit Breaker",
+      "Resilience4j"
+    ],
+    "reference_answer": "关闭:正常放行统计失败率。打开:失败率超阈值所有请求快速失败保护下游。半开:冷却期后放少量探测请求成功则关闭失败则重新打开。参数:失败率阈值(50%)/统计窗口(10s至少20次)/冷却期(30s)/半开探测器(5个)。熔断保护调用方不被慢下游拖垮不是保护被调方。",
+    "key_points": [
+      "关闭→打开→半开",
+      "失败率超阈值触发",
+      "冷却后探测",
+      "半开成功则关闭",
+      "保护调用方"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "读写分离架构怎么设计？延迟怎么处理？",
+    "tags": [
+      "读写分离",
+      "主从复制"
+    ],
+    "reference_answer": "架构:主库写从库读应用层或中间件路由。延迟:主从同步有延迟(毫秒到秒级)。解决:写后N秒强制走主库；半同步复制降延迟不消除；读己之写(自己写自己读走主)。监控Seconds_Behind_Master告警；延迟超阈自动切主。多数读场景容忍毫秒级延迟；金融强一致不走读写分离。",
+    "key_points": [
+      "主写从读",
+      "写后N秒走主",
+      "半同步复制",
+      "读己之写",
+      "SBM告警"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "CQRS 是什么？什么场景适用？",
+    "tags": [
+      "CQRS",
+      "架构模式"
+    ],
+    "reference_answer": "写模型(Command)和读模型(Query)分离不同存储不同数据结构。写→关系型(一致性)→事件→异步构建读模型(ES/Redis/宽表优化查询)。适用:读写比极不均衡(100:1)/读写数据结构差异大/需多种查询维度。不适用:简单CRUD/强一致/小团队。代价:最终一致延迟/架构复杂度/事件丢失重复。",
+    "key_points": [
+      "命令查询分离",
+      "写模型→事件→读模型",
+      "读写比极不均衡",
+      "不适用简单CRUD",
+      "最终一致延迟"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "如何估算系统的 QPS/容量？",
+    "tags": [
+      "容量规划",
+      "QPS",
+      "压测"
+    ],
+    "reference_answer": "公式:日活×人均请求/86400=平均QPS；峰值=平均×峰值系数(3-10倍)。例100万DAU人均20次→平均230QPS峰值(×5)约1150QPS。容量:单机压测得极限QPS→实例数=峰值QPS/单机QPS×1.5冗余。存储:日增量×保留天数×副本数。留30-50%buffer应对突发。",
+    "key_points": [
+      "DAU×人均/86400",
+      "峰值=平均×3-10",
+      "单机压测极限",
+      "1.5倍冗余",
+      "30-50%buffer"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "负载均衡的策略有哪些？",
+    "tags": [
+      "负载均衡",
+      "LB"
+    ],
+    "reference_answer": "轮询简单均匀适合实例一致。加权轮询按配置不同权重。最少连接当前连接少优先适合长连接/处理差异大。一致性哈希同用户固定实例适合本地缓存。随机大样本趋均匀。P2C随机两取负载低兼具均匀和防热点(gRPC/Envoy默认)。LB层粗粒度+服务内细粒度。",
+    "key_points": [
+      "轮询均匀",
+      "加权按配置",
+      "最少连接长连接",
+      "一致性哈希亲和",
+      "P2C防热点"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "多级缓存架构怎么设计？一致性怎么保证？",
+    "tags": [
+      "多级缓存",
+      "一致性"
+    ],
+    "reference_answer": "L1本地缓存(Caffeine毫秒)→L2分布式缓存(Redis亚毫秒网络)→L3数据库。读取逐层穿透回填。L1难点多实例不同步。解决:短TTL(5-30s容忍短暂不一致)/广播失效(数据更新MQ通知清L1)/版本号(L2存版本L1校验)。热点读QPS极高适用。L1命中率>90%才有意义。",
+    "key_points": [
+      "L1→L2→L3分层",
+      "逐层穿透回填",
+      "短TTL+广播失效",
+      "版本号校验",
+      "命中率>90%"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "如何设计一个高可用的服务？单点故障怎么消除？",
+    "tags": [
+      "高可用",
+      "单点故障"
+    ],
+    "reference_answer": "任何单点都是故障点。计算层多实例+LB至少2实例跨可用区。数据层主从+自动故障转移(Sentinel/MGR)。缓存层Redis Cluster/Sentinel。MQ Kafka多副本+多Broker。DNS/LB Anycast多活。配置中心etcd/Consul 3-5节点。定期故障演练(Chaos Engineering)。",
+    "key_points": [
+      "计算多实例跨AZ",
+      "数据主从+故障转移",
+      "缓存Cluster/Sentinel",
+      "MQ多副本",
+      "Chaos演练"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "服务降级的策略有哪些？怎么设计降级开关？",
+    "tags": [
+      "降级",
+      "故障处理"
+    ],
+    "reference_answer": "功能降级关闭非核心(推荐/评论)。数据降级返回缓存兜底(热门代替实时)。体验降级降图片质量关动画。写降级异步改同步。实现:配置中心(Nacos/Apollo)动态开关；Feature Flag平台；代码if(featureEnabled)分支。触发:手动运维操作/自动熔断限流触发。降级策略设计阶段就定义好不是故障时临时想。",
+    "key_points": [
+      "功能/数据/体验降级",
+      "配置中心动态开关",
+      "Feature Flag",
+      "自动熔断触发",
+      "提前定义"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "如何设计一个支持百万并发的 WebSocket 系统？",
+    "tags": [
+      "WebSocket",
+      "高并发",
+      "架构"
+    ],
+    "reference_answer": "接入层LB→连接层无状态WS网关集群→消息路由(Redis Pub/Sub/Kafka)→业务层。单机连接上限epoll 10万级水平扩展。心跳定时Ping超时断连释放资源。消息路由:用户→网关映射存Redis;跨节点通过MQ转发。断线指数退避重连+消息序列号不丢不重。背压:消费慢时缓冲+丢弃策略。原则:连接层无状态/消息路由有状态。",
+    "key_points": [
+      "WS网关集群",
+      "单机epoll 10万",
+      "Redis存用户-网关映射",
+      "MQ跨节点转发",
+      "心跳+断线重连"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "如何做全链路压测？",
+    "tags": [
+      "全链路压测",
+      "性能测试"
+    ],
+    "reference_answer": "单接口压测测单API极限。全链路压测模拟真实用户行为覆盖完整链路。影子表/影子库隔离压测数据;流量标记Header=X-Stress-Test中间件识别路由影子资源;基于脱敏生产数据构造压测集。生产压测必须有熔断保护;压测前通知相关方;压测后清理影子数据。工具:wrk/JMeter/k6。",
+    "key_points": [
+      "影子表/库隔离",
+      "Header标记流量",
+      "脱敏数据构造",
+      "熔断保护",
+      "压测后清理"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "如何设计一个高并发计数系统？",
+    "tags": [
+      "计数",
+      "Redis",
+      "高并发"
+    ],
+    "reference_answer": "挑战:写QPS极高(每次浏览+1)/读QPS高/允许短暂不精确。Redis INCR原子自增定时批量同步DB(每5s或1000次)。合并写入:本地内存攒批每100次批量UPDATE。异步:M发事件MQ消费者异步更计数。读写分离:写Redis读Redis DB持久化兜底。展示场景±1%误差可接受;金融强一致走DB事务。",
+    "key_points": [
+      "Redis INCR+批量同步",
+      "本地攒批",
+      "异步MQ",
+      "±1%误差可接受",
+      "金融走DB事务"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "数据库连接池怎么配置？连接泄漏怎么排查？",
+    "tags": [
+      "连接池",
+      "HikariCP"
+    ],
+    "reference_answer": "参数:minIdle/maxPoolSize/connectionTimeout/idleTimeout/maxLifetime。maxPoolSize=CPU核数×2+有效磁盘数通常10-50。泄漏:连接借出未归还(忘close/事务未提交)。排查:HikariCP leakDetectionThreshold借出超N秒打日志；监控active/idle；慢查询致连接长时间占用。连接池不是越大越好；用完必须归还。",
+    "key_points": [
+      "maxPoolSize=2N+disk",
+      "10-50够用",
+      "leakDetectionThreshold",
+      "监控active/idle",
+      "用完归还"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Kafka 架构核心概念？Topic/Partition/Consumer Group关系？",
+    "tags": [
+      "Kafka",
+      "架构"
+    ],
+    "reference_answer": "Topic逻辑分类。Partition有序不可变消息序列并行基本单位。Producer按key hash或轮询写Partition。Consumer Group组内分摊Partition(一Partition只一组内一Consumer消费)；多组独立消费同Topic。Offset消费位点Consumer自己管理。Broker服务节点Controller管理Leader选举。Partition数决定最大并行度。",
+    "key_points": [
+      "Topic逻辑/Partition物理",
+      "组内分摊Partition",
+      "一组一Consumer",
+      "Offset自管理",
+      "Partition=最大并行度"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "如何保证消息不丢失？Producer/Broker/Consumer三端怎么做？",
+    "tags": [
+      "Kafka",
+      "消息可靠性"
+    ],
+    "reference_answer": "Producer:acks=all等所有ISR确认+retries>0+幂等。Broker:replication>=3+min.insync>=2+禁止unclean选举。Consumer:手动commit关自动/处理完业务再commit/幂等消费。代价:acks=all+min.insync=2降低吞吐。没有绝对不丢只有丢的概率足够低。",
+    "key_points": [
+      "acks=all+retries+幂等",
+      "replication>=3",
+      "min.insync>=2",
+      "手动commit",
+      "丢概率足够低"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "消息重复消费怎么处理？幂等怎么实现？",
+    "tags": [
+      "Kafka",
+      "幂等",
+      "消息"
+    ],
+    "reference_answer": "为什么重复:Consumer处理完commit失败重消费;Producer重试重复写入。幂等方案:唯一消息ID+去重表(处理前查已存在跳过)/业务唯一键(订单号)+UNIQUE约束/状态机(只单向流转重复拒绝)/Redis SET NX(消息ID作key)。每消息必须有全局唯一ID；消费逻辑设计为可重复执行且结果不变。",
+    "key_points": [
+      "commit失败重消费",
+      "唯一ID+去重表",
+      "UNIQUE约束",
+      "状态机单向",
+      "Redis SET NX"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "消息顺序性怎么保证？什么场景需要？",
+    "tags": [
+      "Kafka",
+      "顺序消息"
+    ],
+    "reference_answer": "需顺序:订单状态变更/Binlog同步。Kafka同Partition内有序:需保序消息发同一Partition(用业务key如order_id hash)。代价单Partition单消费者吞吐受限。折中只保证\"同订单\"顺序不同订单并行。RocketMQ顺序消息(MessageQueueSelector)；RabbitMQ单Queue+单Consumer。尽量避免全局顺序缩小到同实体。",
+    "key_points": [
+      "同Partition有序",
+      "order_id hash",
+      "单消费者吞吐受限",
+      "RocketMQ顺序消息",
+      "缩小到同实体"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "消息积压怎么处理？如何快速消化？",
+    "tags": [
+      "Kafka",
+      "消息积压"
+    ],
+    "reference_answer": "紧急:临时扩容Consumer(不超Partition数)/增Partition数+扩容/临时Consumer只做转发(搬到更多Partition Topic慢慢消费)。根因:消费慢(DB慢查询/外部超时)/生产突增(活动bug)/频繁rebalance。预防:监控Lag告警/消费异步批量化/Partition预留余量。先止血(扩容转发)再查根因最后防复发。",
+    "key_points": [
+      "扩容Consumer",
+      "转发到多Partition",
+      "消费慢查根因",
+      "监控Lag告警",
+      "先止血再查因"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "RocketMQ 事务消息怎么实现？",
+    "tags": [
+      "RocketMQ",
+      "事务消息"
+    ],
+    "reference_answer": "流程:Producer发半消息(Half)对Consumer不可见→Broker确认→Producer执行本地事务→成功Commit消息可见/失败Rollback丢弃→超时Broker回查(Check)Producer本地事务状态。优势:不需本地消息表/Broker可靠投递/只需实现回查接口。局限:只保证本地事务和消息发送原子性不保证消费端事务。",
+    "key_points": [
+      "Half消息不可见",
+      "本地事务→Commit",
+      "失败Rollback",
+      "超时回查",
+      "不保证消费事务"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Kafka vs RabbitMQ vs Pulsar 怎么选？",
+    "tags": [
+      "Kafka",
+      "RabbitMQ",
+      "Pulsar",
+      "选型"
+    ],
+    "reference_answer": "Kafka高吞吐(百万级/秒)日志/事件流/大数据生态最丰富。RabbitMQ灵活路由中小规模/AQMP协议吞吐较低(万级/秒)。Pulsar多租户存算分离(BookKeeper)无限存储跨地域复制适合超大规模云原生。日志事件流→Kafka；业务消息复杂路由→RabbitMQ；超大规模多租户→Pulsar。团队熟悉度>技术先进性。",
+    "key_points": [
+      "Kafka高吞吐日志",
+      "RabbitMQ灵活路由",
+      "Pulsar存算分离",
+      "吞吐vs路由vs规模",
+      "团队熟悉有限"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "死信队列（Dead Letter Queue）怎么设计？",
+    "tags": [
+      "死信队列",
+      "DLQ"
+    ],
+    "reference_answer": "消费失败超最大重试次数的消息转入DLQ不阻塞正常消费。重试指数退避(1s→2s→4s)最多3-5次。死信处理:告警通知/人工排查修复重投/自动补偿。存储保留7-30天过期清理。监控DLQ深度>0需关注。死信不是垃圾桶是待处理异常必须有明确处理流程和责任人。",
+    "key_points": [
+      "超最大重试→DLQ",
+      "指数退避3-5次",
+      "告警+人工/自动",
+      "保留7-30天",
+      "不是垃圾桶"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Event-Driven Architecture 优缺点？",
+    "tags": [
+      "EDA",
+      "事件驱动",
+      "架构"
+    ],
+    "reference_answer": "优点:松耦合(新增消费者无需改发布者)/异步削峰/天然审计(事件流即日志)。缺点:最终一致性/调试困难(异步链路长)/Schema演进复杂/可能过度解耦。vs请求响应:同步适合强依赖即时响应；事件适合通知异步跨域协作。核心链路同步保可控；非核心跨域用事件解耦。不为解耦把全部调用改事件。",
+    "key_points": [
+      "松耦合异步削峰",
+      "天然审计日志",
+      "最终一致难调试",
+      "Schema演进",
+      "核心同步非核心事件"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Exactly-Once 语义真的能实现吗？",
+    "tags": [
+      "Exactly-Once",
+      "消息",
+      "幂等"
+    ],
+    "reference_answer": "严格说分布式Exactly-Once极难实现需三端协调。实际:At-Least-Once+幂等=效果Exactly-Once。Kafka:幂等Producer+事务API可做Producer→Broker Exactly-Once但Consumer仍需幂等。Flink+Kafka:Checkpoint机制可端到端Exactly-Once(两阶段提交)。不追求理论Exactly-Once用At-Least-Once+幂等工程上达相同效果。",
+    "key_points": [
+      "三端协调极难",
+      "At-Least-Once+幂等",
+      "事务API",
+      "Flink Checkpoint",
+      "工程等效"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "2PC 两阶段提交的流程和问题？",
+    "tags": [
+      "2PC",
+      "分布式事务"
+    ],
+    "reference_answer": "Prepare:协调者问所有参与者能提交吗参与者锁资源写Undo/Redo回复Yes/No。Commit:全Yes发Commit任一No发Rollback。问题:同步阻塞(Participant持锁等)/单点故障(协调者挂参与者无限等)/数据不一致(Commit阶段部分收到部分没)。仅强一致+参与者少的场景。",
+    "key_points": [
+      "Prepare→Commit",
+      "持锁等待",
+      "协调者单点",
+      "Commit阶段不一致",
+      "仅强一致场景"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "TCC（Try-Confirm-Cancel）怎么设计？",
+    "tags": [
+      "TCC",
+      "分布式事务"
+    ],
+    "reference_answer": "Try预留资源(冻结库存/余额)。Confirm确认提交(扣减冻结)。Cancel取消释放(解冻)。优点:不依赖DB锁/业务层控制/性能好(无全局锁)。缺点:业务侵入大(每操作三接口)/需幂等/空回滚/悬挂。适用:金融交易库存扣减需强一致+高性能。TCC是用复杂度换性能。",
+    "key_points": [
+      "Try预留",
+      "Confirm提交",
+      "Cancel释放",
+      "三接口侵入大",
+      "复杂度换性能"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Saga 模式和 TCC 区别？",
+    "tags": [
+      "Saga",
+      "TCC",
+      "分布式事务"
+    ],
+    "reference_answer": "Saga长事务拆系列本地事务每步有补偿操作失败逆序补偿。编排式(中央协调)/协同式(事件驱动)。vs TCC:Saga无Try阶段不预留直接执行；补偿是反向操作非释放预留。适用:跨服务长流程(订单→支付→物流)；参与者不支持TCC。局限:补偿可能失败(需重试人工)/中间态对外可见。",
+    "key_points": [
+      "长事务拆本地事务",
+      "失败逆序补偿",
+      "编排vs协同",
+      "无Try直接执行",
+      "补偿可能失败"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Seata AT模式原理和局限？",
+    "tags": [
+      "Seata",
+      "分布式事务",
+      "AT"
+    ],
+    "reference_answer": "一阶段拦截SQL记录Before/After Image到Undo Log直接提交不持锁。二阶段Commit异步删Undo Log；Rollback据Before Image反向恢复。优点:业务无侵入/性能比2PC好。局限:依赖全局锁(写隔离)；不支持NoSQL；Undo Log可被其他事务修改(脏写风险)；不适合高并发写热点。适用:中小微服务关系型DB。",
+    "key_points": [
+      "Before/After Image",
+      "一阶段不持锁",
+      "Commit异步",
+      "业务无侵入",
+      "脏写风险"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "分布式事务选型决策树？",
+    "tags": [
+      "分布式事务",
+      "选型"
+    ],
+    "reference_answer": "强一致+低延迟+参与者少→2PC/XA。强一致+高性能+可预留→TCC。强一致+业务无侵入+关系型→Seata AT。最终一致+跨服务长流程→Saga。最终一致+异步通知→本地消息表/事务消息。不需要事务→幂等+重试+对账(最简单)。优先避免分布式事务通过设计消除跨服务事务；必用时选最轻方案。",
+    "key_points": [
+      "强一致:2PC/TCC/AT",
+      "最终一致:Saga/本地消息",
+      "优先避免",
+      "消除跨服务事务",
+      "选最轻方案"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "如何设计对账系统兜底一致性？",
+    "tags": [
+      "对账",
+      "一致性",
+      "兜底"
+    ],
+    "reference_answer": "即使消息丢失重复乱序通过对账发现修复不一致。T+1凌晨对比两端数据(支付vs订单)。差异分类:单边账(一边有一边没)/金额不一致/状态不一致。处理:自动修复(补单退款)/人工介入(复杂差异)。差异率超阈值告警。对账是最后防线不能替代实时一致性但必须有。金融系统对账可到分钟级。",
+    "key_points": [
+      "T+1对账",
+      "单边账/金额/状态",
+      "自动修复+人工",
+      "差异率告警",
+      "最后防线"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "什么是最终一致性？怎么向非技术人员解释？",
+    "tags": [
+      "最终一致性",
+      "解释"
+    ],
+    "reference_answer": "银行转账A扣款B加款不是同一瞬间但最终B一定收到钱。数据更新后不保证所有副本立即可见但保证有限时间内所有副本一致。保障:重试补偿对账消息可靠投递。向非技术:就像发快递包裹不是瞬间到达但一定到。我们保证一定到不是瞬间到。关键定义最终时间窗口SLA如5分钟内一致。",
+    "key_points": [
+      "一定到非瞬间到",
+      "秒分级收敛",
+      "重试加对账",
+      "定义SLA",
+      "发快递类比"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "分布式锁实现方案对比？Redis vs ZK？",
+    "tags": [
+      "分布式锁",
+      "Redis",
+      "ZooKeeper"
+    ],
+    "reference_answer": "Redis(SET NX EX)性能最高主从切换可能丢锁(RedLock争议)适合高并发容忍极端。ZK(临时顺序节点)强一致(ZAB)监听自动释但性能较低适合正确性极高场景。DB(SELECT FOR UPDATE)最简单性能最差但无额外依赖。选型:高并发缓存→Redis；分布式协调Leader选举→ZK/etcd；简单低频→DB。必须设超时防死锁/释必须验证持有者。",
+    "key_points": [
+      "Redis性能高",
+      "ZK强一致",
+      "RedLock争议",
+      "必须设超时",
+      "释放验证持有者"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "如何设计跨数据中心多活架构？",
+    "tags": [
+      "多活",
+      "跨数据中心",
+      "单元化"
+    ],
+    "reference_answer": "目标多中心同时对外服务任一故障不影响。核心挑战:数据同步延迟(几十-几百ms)/流量调度/数据冲突。方案:单元化按用户ID分片每单元含完整服务链+数据。用户请求固定路由所属单元。同步:MySQL半同步/DTS；Redis跨域复制；最终一致+冲突解决(LWW/CRDT)。流量:DNS/GSLB按地域路由故障切换。阿里/字节多活都是单元化架构。",
+    "key_points": [
+      "单元化按用户分片",
+      "请求固定路由",
+      "跨域异步同步",
+      "LWW/CRDT冲突解决",
+      "DNS/GSLB流量调度"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "一致性模型有哪些级别？怎么选择？",
+    "tags": [
+      "一致性模型",
+      "分布式"
+    ],
+    "reference_answer": "强一致(Linearizability)所有节点同时看相同数据代价高。顺序一致所有操作有全局顺序但不要求实时。因果一致有因果关系的保序无关可乱。最终一致停止写入后所有副本最终收敛。金融/库存→强一致/社交Feed→最终一致/协作编辑→因果一致。能用弱一致不用强一致一致性的代价是延迟和可用性。",
+    "key_points": [
+      "强→顺序→因果→最终",
+      "强一致代价最高",
+      "最终一致最轻",
+      "金融/社交/协作选不同",
+      "代价=延迟+可用"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "设计一个短链系统（TinyURL）",
+    "tags": [
+      "系统设计",
+      "短链"
+    ],
+    "reference_answer": "短码:自增ID+Base62编码(62^6≈568亿)或哈希取前N位需冲突处理。存储:短码→长URL映射MySQL/Redis读多写少。重定向:301永久浏览器缓存减压力/302临时可统计。扩展:过期时间/自定义短码/点击统计/防滥用。性能:读QPS极高→Redis+CDN/写QPS低单库够。",
+    "key_points": [
+      "Base62编码",
+      "读多写少",
+      "301vs302",
+      "Redis+CDN",
+      "单库够"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "设计一个秒杀系统",
+    "tags": [
+      "秒杀",
+      "系统设计",
+      "高并发"
+    ],
+    "reference_answer": "挑战:瞬时10万+QPS/库存不超卖/大多请求注定失败。前端:防重复+验证码削峰+静态CDN。接入:Nginx限流过滤无效请求。应用:Redis预扣库存(DECR原子)/库存0直接返回售罄(拦截99%)。MQ:扣减成功发MQ异步创单。数据:Consumer消费创单+扣DB库存(事务)。尽量上层拦截到DB量极小。",
+    "key_points": [
+      "Redis DECR预扣",
+      "库存0拦截99%",
+      "MQ异步创单",
+      "上层拦截",
+      "限流降级兜底"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "设计一个Feed流（朋友圈/Twitter）",
+    "tags": [
+      "Feed流",
+      "系统设计"
+    ],
+    "reference_answer": "推模式发布时写入所有粉丝收件箱(写扩散大V发布一次写百万)读快。拉模式读取时实时聚合关注人动态(读慢)。推拉结合:大V(>1万粉丝)拉/普通推。存储:Timeline Redis ZSET(score时间)；内容MySQL/Mongo；媒体对象存。分页:游标last_id不用OFFSET。扩展:已读/排序(时间vs算法)/内容审核。",
+    "key_points": [
+      "推模式写扩散",
+      "拉模式读聚合",
+      "大V拉普通推",
+      "Redis ZSET",
+      "游标分页"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个分布式限流系统",
+    "tags": [
+      "限流",
+      "系统设计"
+    ],
+    "reference_answer": "单机Guava RateLimiter简单不精确(多实例总和超阈)。Redis+Lua全局令牌桶:Redis 10万+QPS Lua原子。分层:网关(Kong/Nginx)粗粒度+应用细粒度。滑动窗口:ZSET记录每请求时间戳ZREMRANGEBYSCORE清过期+ZCARD计数。限流在入口做减少无效请求穿透后端。",
+    "key_points": [
+      "Redis+Lua全局",
+      "Gateway+应用分层",
+      "滑动窗口ZSET",
+      "令牌桶允许突发",
+      "入口减少无效请求"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个延迟任务系统（订单30分钟取消）",
+    "tags": [
+      "延迟任务",
+      "系统设计"
+    ],
+    "reference_answer": "DB轮询简单但延迟高DB压力。Redis ZSET score存执行时间戳定时ZRANGEBYSCORE取秒级精度。时间轮(HashedWheelTimer)内存高效Netty/Kafka内用重启丢。延迟消息:RocketMQ延迟级别/RabbitMQ TTL+死信/ Kafka不原生。XXL-Job/ElasticJob定时触发。精度低→Redis/调度平台；精度高→时间轮/延迟消息；可靠高→MQ+持久化。",
+    "key_points": [
+      "Redis ZSET秒级",
+      "时间轮内存高效",
+      "RocketMQ延迟消息",
+      "精度选方案",
+      "持久化可靠"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "设计一个IM即时通讯系统",
+    "tags": [
+      "IM",
+      "系统设计",
+      "WebSocket"
+    ],
+    "reference_answer": "连接层WS长连接;消息路由用户→网关节点映射。单聊:A→网关1→消息服务→查B在网关2→推送B;不在线存离线消息。群聊:写群消息存储→异步扩散成员(写扩散)或读时聚合(读扩散)。可靠性:客户端消息序列号+服务端ACK+重发+去重。存储:MongoDB/Cassandra按会话分片;最近N条Redis快速加载。扩展:已读回执/撤回/多端同步/敏感词。",
+    "key_points": [
+      "WS长连接",
+      "网关节点映射",
+      "消息序列号+ACK",
+      "离线消息",
+      "按会话分片"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个搜索自动补全系统",
+    "tags": [
+      "自动补全",
+      "Trie",
+      "系统设计"
+    ],
+    "reference_answer": "数据结构Trie前缀树存候选词+权重(搜索频率)。查询:输前缀→Trie匹配→按权重排序→TopK。优化:节点缓存TopK免遍历;分片按首字母分节点。更新:搜索日志异步统计词频→定期重建或增量。个性化:结合用户历史。性能:O(L)匹配L前缀长;TopK用最小堆。扩展:拼写纠错/多语言/敏感词过滤。",
+    "key_points": [
+      "Trie前缀树",
+      "节点缓存TopK",
+      "按权重排序",
+      "异步更新",
+      "O(L)匹配"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个分布式配置中心",
+    "tags": [
+      "配置中心",
+      "系统设计"
+    ],
+    "reference_answer": "核心:配置CRUD/动态推送/环境隔离/版本回滚/灰度发布。架构:存储(MySQL/etcd)+配置服务(API+推送)+客户端SDK(长连接/轮询)。推送:WebSocket/gRPC Stream实时推或HTTP长轮询(Sentinel方式)。高可用:服务多实例+LB/存储主从集群。Nacos/Apollo/Consul成熟方案。自建需考虑推送延迟/客户端缓存/容灾。",
+    "key_points": [
+      "动态推送实时生效",
+      "环境隔离版本回滚",
+      "长连接/长轮询",
+      "客户端缓存兜底",
+      "Nacos/Apollo"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个分布式任务调度系统",
+    "tags": [
+      "任务调度",
+      "系统设计"
+    ],
+    "reference_answer": "核心:定时触发/任务分片/失败重试/依赖DAG。架构:调度中心(触发分配)+执行器集群(执行)。调度策略:轮询/随机/一致性哈希/故障转移。分片:大任务拆多片并行如1亿数据拆10片每执行器1000万。高可用:调度中心多实例选主/执行器注册+心跳。XXL-Job轻量/ElasticJob分片强/Airflow DAG。",
+    "key_points": [
+      "调度中心+执行器",
+      "任务分片并行",
+      "故障转移",
+      "一致性哈希",
+      "XXL-Job/Airflow"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个分布式日志收集系统",
+    "tags": [
+      "日志",
+      "ELK",
+      "系统设计"
+    ],
+    "reference_answer": "架构:采集(Filebeat/Fluentd)→传输(Kafka缓冲削峰)→存储(ES/ClickHouse)→展示(Kibana/Grafana)。采集Sidecar/DaemonSet每个节点tail日志。格式标准化JSON+TraceID;采样DEBUG不采;TTL自动过期;索引按天分片。日增TB级需Kafka多Partition+ES多Shard。",
+    "key_points": [
+      "Filebeat→Kafka→ES",
+      "JSON+TraceID",
+      "采样+TTL",
+      "按天分片",
+      "TB级多Partition"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "设计一个在线协作文档（Google Docs）",
+    "tags": [
+      "OT",
+      "CRDT",
+      "协作"
+    ],
+    "reference_answer": "挑战:多人同时编辑保证收敛一致。冲突解决:OT(Operational Transformation)将编辑转可交换操作序列Google Docs用实现复杂；CRDT数据结构本身保证合并无冲突Figma/Notion用。实时:WebSocket长连接操作广播所有协作者/本地乐观更新+服务端确认。存储:操作日志Op Log持久化+定期Snapshot加速加载。权限/版本历史/离线+上线合并。",
+    "key_points": [
+      "OT操作变换",
+      "CRDT无冲突合并",
+      "WebSocket广播",
+      "Op Log+Snapshot",
+      "权限+离线"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "设计一个电商订单系统",
+    "tags": [
+      "电商",
+      "订单",
+      "系统设计"
+    ],
+    "reference_answer": "流程:下单→锁库存→支付→扣库存→发货→完成。状态机:CREATED→PAID→SHIPPED→COMPLETED/CANCELLED/REFUNDING。库存:Redis预扣防超卖+DB最终扣减(事务)。支付:第三方回调/幂等(同通知只处理一次)。超时取消:延迟任务30分钟未支付自动取消+释放库存。分库分表按user_id;冗余商品快照防修改影响历史。",
+    "key_points": [
+      "状态机单向流转",
+      "Redis预扣+DB事务",
+      "支付幂等",
+      "延迟取消",
+      "按user_id分片"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个分布式文件存储系统",
+    "tags": [
+      "文件存储",
+      "GFS",
+      "系统设计"
+    ],
+    "reference_answer": "核心:元数据服务(Master/NameNode存文件→块→节点映射)+数据节点(DataNode存实际块)。写:客户端请求Master获DataNode列表→流水线写入多副本(3副本)→全部确认→更新元数据。读:Master获块位置→就近读。可靠:多副本跨机架/心跳检测/副本不足自动补。大文件分块64MB/断点续传。MinIO(S3)/Ceph/SeaweedFS。",
+    "key_points": [
+      "Master+DataNode",
+      "流水线3副本",
+      "就近读",
+      "心跳+自动补",
+      "64MB块"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个评论系统",
+    "tags": [
+      "评论",
+      "系统设计"
+    ],
+    "reference_answer": "数据模型:评论ID/内容/作者/目标/父评论ID/时间/点赞。嵌套vs平铺:两级嵌套(评论+回复)最常用。排序:时间/热度(点赞+回复+时间衰减)。存储:MySQL按目标ID分表;热评Redis缓存;计数Redis。防刷:频率限制/内容审核(敏感词+AI)/举报。热门内容评论万条→游标分页只加载前N+展开更多。",
+    "key_points": [
+      "两级嵌套",
+      "热度排序",
+      "按目标ID分表",
+      "Redis计数",
+      "游标分页"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个分布式会话管理系统",
+    "tags": [
+      "Session",
+      "分布式"
+    ],
+    "reference_answer": "集中式Redis存Session(Set-Cookie存SessionID)最常用。JWT无状态信息编Token无需存储但无法主动失效(需黑名单)。Sticky Session LB按IP/Cookie固定路由同实例简单但实例挂Session丢。Redis设计:key=session:{id}/value=用户JSON/TTL=30分钟滑动过期。安全:HttpOnly+Secure+SameSite+足够随机ID+登录后重新生成防固定。",
+    "key_points": [
+      "Redis集中式最常用",
+      "JWT无状态需黑名单",
+      "Sticky简单有风险",
+      "HttpOnly+Secure",
+      "滑动过期"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "设计一个API Gateway",
+    "tags": [
+      "API Gateway",
+      "系统设计"
+    ],
+    "reference_answer": "核心:路由转发/认证鉴权/限流熔断/协议转换/日志监控/灰度。架构:网关集群无状态+配置中心路由动态更新+插件机制。Kong(OpenResty/Lua)/APISIX(高性能)/Spring Cloud Gateway(Java)/Envoy(Service Mesh)。路由匹配Path/Header/Method/Query。插件链:认证→限流→日志→转发→响应。高可用多实例+LB/配置热更新不重启。延迟<5ms附加。",
+    "key_points": [
+      "路由/认证/限流",
+      "Kong/APISIX/Envoy",
+      "插件链",
+      "配置热更新",
+      "<5ms附加延迟"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个分布式文件上传系统（大文件断点续传）",
+    "tags": [
+      "文件上传",
+      "断点续传",
+      "系统设计"
+    ],
+    "reference_answer": "大文件:前端分片(5MB/片)并行上传→服务端合并。断点续传:上传前查已上传分片只传缺失。秒传:文件SHA-256哈希已存在直接成功。存储:分片临时存本地/Redis→全齐合并→存对象存储S3/OSS。并发控制:前端限并行3-5/服务端限流。可靠:分片失败重试/合并失败重传/超时清理临时。扩展:转码/CDN。",
+    "key_points": [
+      "5MB分片并行",
+      "查缺失=断点",
+      "SHA-256秒传",
+      "临时存→合并→S3",
+      "超时清理"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个RBAC权限管理系统",
+    "tags": [
+      "RBAC",
+      "权限",
+      "系统设计"
+    ],
+    "reference_answer": "模型:User→Role→Permission。权限粒度:页面级(菜单)/按钮级(操作)/数据级(只看自己)。五张表:user/role/permission/user_role/role_permission。鉴权:登录加载权限到Redis/Token每次请求中间件校验。前端动态渲染菜单但后端必须校验。扩展:数据权限/临时授权/审批流/审计日志。最小权限原则。",
+    "key_points": [
+      "User→Role→Permission",
+      "五张表",
+      "后端必须校验",
+      "数据权限",
+      "最小权限"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个灰度发布系统",
+    "tags": [
+      "灰度发布",
+      "系统设计"
+    ],
+    "reference_answer": "控制新版本仅对部分用户流量生效验证后逐步放量。维度:用户ID百分比/白名单/地域/设备/Header。网关层Istio VirtualService/Nginx upstream路由v1/v2。应用层Feature Flag控制分支。流程:1%→5%→20%→50%→100%每步观察核心指标。回滚一键切回100%旧版。配套A/B测试/监控新旧对比。",
+    "key_points": [
+      "流量分割维度",
+      "VirtualService路由",
+      "Feature Flag",
+      "1→5→20→50→100",
+      "一键回滚"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个分布式爬虫系统",
+    "tags": [
+      "爬虫",
+      "分布式",
+      "系统设计"
+    ],
+    "reference_answer": "架构:调度中心(URL队列+去重)→爬虫集群(下载+解析)→数据存储→反爬策略。URL管理:优先级队列Redis ZSET/布隆去重(百亿级)/深度频率限制。分布式多Worker从队列取URL→下载→解析→新URL入队。反爬:IP代理池/UA轮换/频率随机/验证码/无头浏览器Playwright。数据:原始页对象存储/结构化ES-MySQL/指纹Redis。",
+    "key_points": [
+      "URL队列+布隆",
+      "多Worker",
+      "IP代理池",
+      "无头浏览器",
+      "增量爬取"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "设计一个全球CDN系统",
+    "tags": [
+      "CDN",
+      "系统设计"
+    ],
+    "reference_answer": "核心:内容缓存全球边缘节点用户就近访问。架构:源站(Origin)→区域缓存(Regional)→边缘节点(Edge)→用户。缓存策略TTL/LRU淘汰/预热。路由:DNS/GSLB按IP解析最近节点/Anycast。回源:边缘miss→区域/源拉取→缓存返回。一致性:主动Purge刷新/版本号URL style.v2.css。安全:DDoS边缘吸收/WAF/HTTPS。",
+    "key_points": [
+      "Origin→Regional→Edge",
+      "DNS/GSLB就近",
+      "回源+预热",
+      "Purge+版本URL",
+      "边缘DDoS吸收"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "设计一个分布式ID生成服务",
+    "tags": [
+      "分布式ID",
+      "系统设计"
+    ],
+    "reference_answer": "需求:全局唯一/趋势递增/10万+QPS/高可用。号段+雪花双模式。号段:DB表(biz_tag/max_id/step)启动取号段缓存用完再取双Buffer预加载(当前用10%异步加载下一段)。雪花:时间戳+机器ID+序列号ZK分配机器ID时钟回拨等待或报错。高可用:多实例/号段DB主从/雪花无外部依赖。HTTP/gRPC传入biz_tag返回ID。",
+    "key_points": [
+      "号段双Buffer",
+      "雪花机器ID ZK",
+      "时钟回拨处理",
+      "多实例高可用",
+      "HTTP/gRPC"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个实时数据大屏系统",
+    "tags": [
+      "大屏",
+      "实时",
+      "系统设计"
+    ],
+    "reference_answer": "数据流:业务→事件/Kafka→实时计算Flink/Spark Streaming→聚合结果→缓存Redis→前端大屏WebSocket/SSE推送1-5s刷新。前端ECharts/D3.js。Flink窗口聚合每5s统计PV/UV/GMV。降级:数据源异常展示上次缓存+延迟提示。大屏通常只读QPS不高瓶颈在实时计算和数据管道。",
+    "key_points": [
+      "Kafka→Flink",
+      "窗口聚合",
+      "Redis缓存",
+      "WebSocket推送5s",
+      "降级展示"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "设计一个多租户SaaS平台",
+    "tags": [
+      "SaaS",
+      "多租户",
+      "系统设计"
+    ],
+    "reference_answer": "隔离:独立DB每租户(最强最贵)/共享DB独立Schema(平衡)/共享表+tenant_id(最省需严格过滤)。租户上下文:中间件自动注入tenant_id所有SQL自动追加WHERE。资源隔离:按租户限流配额防单租户打满。配置化:不同租户功能开关/主题/域名。数据迁移:升级降级迁移方案。计费按量按席/审计日志/自定义字段。",
+    "key_points": [
+      "三种隔离模型",
+      "中间件注入tenant_id",
+      "资源限流配额",
+      "计费+审计",
+      "自定义字段"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个在线考试/面试系统",
+    "tags": [
+      "系统设计",
+      "在线考试"
+    ],
+    "reference_answer": "核心:题库管理/组卷策略/考试流程(开始→答题→提交→评分)/防作弊/监控。组卷:题型分布+难度+数量；可从题库随机抽或手动选。答题:单题提交或全卷一次提交；断线重连保留已答内容；倒计时。评分:客观题自动对答案；主观题AI评分+人工复核。防作弊:切屏检测/摄像头AI监考/禁用复制粘贴。",
+    "key_points": [
+      "题库组卷",
+      "断线保留答题",
+      "倒计时",
+      "自动+手动评分",
+      "切屏检测"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个分布式任务调度系统",
+    "tags": [
+      "任务调度",
+      "系统设计"
+    ],
+    "reference_answer": "核心功能:定时触发;任务分片;失败重试;依赖DAG。调度中心+执行器集群。调度策略:轮询/随机/一致性哈希/故障转移。分片:大任务拆多片并行。高可用调度中心多实例选主/执行器注册+心跳。参考:XXL-Job(轻量)/ElasticJob(分片强)/Airflow(DAG编排)/K8s CronJob",
+    "key_points": [
+      "定时触发+分片",
+      "失败重试",
+      "DAG依赖",
+      "一致性哈希",
+      "高可用选主"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个推荐系统架构",
+    "tags": [
+      "推荐系统",
+      "系统设计"
+    ],
+    "reference_answer": "召回:多路召回(协同过滤+内容+热门+新内容)每路取topN。排序:精排模型(深度学习)对候选打分。重排:去重/打散/多样性/业务规则(去重已看/新人提权)。特征:用户画像+行为序列+内容标签;实时+离线特征。A/B实验层:分流→对照组→效果评估。延迟:离线T+1+实时流Flink秒级更新。",
+    "key_points": [
+      "多路召回",
+      "精排打分",
+      "重排多样性",
+      "实时+离线特征",
+      "A/B实验"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个红包/秒杀库存的库存扣减系统",
+    "tags": [
+      "库存",
+      "Redis",
+      "并发"
+    ],
+    "reference_answer": "Redis DECR原子预扣:库存>0扣减成功;库存=0快速返回售罄。DB最终扣减:成功Redis扣减发MQ异步DB扣+创单(事务)。库存回补:下单超时/用户取消→Redis INCR回补+DB回补。一致性:Redis主从切换可能丢库存需对账兜底;少量超卖概率可接受(库存1000超1-3不致命);不可超卖用Redis单实例直扣。",
+    "key_points": [
+      "Redis DECR预扣",
+      "DB异步扣",
+      "MQ事务",
+      "超时回补INCR",
+      "对账兜底"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个特征开关系统",
+    "tags": [
+      "Feature Flag",
+      "系统设计"
+    ],
+    "reference_answer": "控制新版本仅对部分用户流量生效验证后逐步放量。维度:全量/用户/百分比/环境。管理:配置存储(DB/etcd)+配置服务API+推送+客户端SDK本地缓存定期同步。生命周期:上线后及时清理避免配置地狱;审计日志(谁何时改了什么);权限控制。工具:LaunchDarkly(SaaS)/Unleash(开源)/简单场景配置中心即可。",
+    "key_points": [
+      "全量/用户/百分比",
+      "本地缓存+定期同步",
+      "及时清理",
+      "审计日志",
+      "LaunchDarkly/Unleash"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个风控系统",
+    "tags": [
+      "风控",
+      "系统设计"
+    ],
+    "reference_answer": "实时规则引擎:规则配置→事件流→规则匹配→决策(通过/拒绝/人工审核)。离线模型:用户画像/行为序列→训练模型→更新规则。特征:设备指纹/IP/地理位置/操作频率/模式识别。决策分级:低风险放行/中风险验证码/高风险拒绝+人工。关键:低延迟(<50ms)/高可用(挂了不能影响业务)/可配置(规则热更新)。",
+    "key_points": [
+      "实时规则引擎",
+      "离线模型",
+      "设备指纹",
+      "决策分级",
+      "低延迟<50ms"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个接口Mock平台",
+    "tags": [
+      "Mock",
+      "系统设计"
+    ],
+    "reference_answer": "需求:前后端并行开发前端依赖后端接口未就绪。核心:Mock规则配置(请求匹配→响应模板);动态响应(根据请求参数返回不同数据);延迟模拟;异常模拟。实现:拦截HTTP请求(代理/中间件)→匹配规则→返回Mock响应。管理:在线配置/版本管理/团队共享/导入Swagger自动生成。",
+    "key_points": [
+      "请求匹配→响应模板",
+      "动态响应",
+      "延迟/异常模拟",
+      "Swagger导入",
+      "团队共享"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "设计一个自适应的限流系统",
+    "tags": [
+      "限流",
+      "自适应",
+      "系统设计"
+    ],
+    "reference_answer": "固定阈值限流在流量变化时要么浪费要么打死。自适应:根据系统实时负载(CPU/内存/延迟)动态调阈值。实现:监控指标→滑动窗口统计→PID控制器/令牌桶自适应(负载高减令牌生成速/负载恢复加速)。分级限流:不同用户等级不同阈值(VIP高/普通低)。反馈:拒绝请求返回429+Retry-After+当前可用限额。",
+    "key_points": [
+      "根据负载动态调阈",
+      "PID控制",
+      "分级限流",
+      "429+可用限额",
+      "负载高降速"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "如何设计一个千万级QPS的DNS系统",
+    "tags": [
+      "DNS",
+      "系统设计",
+      "高并发"
+    ],
+    "reference_answer": "DNS查询链:用户→LocalDNS(运营商)→根域→顶级域→权威DNS。优化:Anycast+BGP多节点就近响应;分层缓存(边界DNS→递归缓存→权威);预取热门域名。性能:单机响应百万QPS;UDP协议极轻。安全:DNSSEC防篡改;DDoS清洗(Anycast分散攻击)。可用性:多权威DNS同时服务。",
+    "key_points": [
+      "Anycast+BGP",
+      "分层缓存",
+      "UDP轻量",
+      "DNSSEC",
+      "Anycast分散攻击"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "单体→微服务拆分原则？什么时候不该拆？",
+    "tags": [
+      "微服务",
+      "拆分",
+      "架构"
+    ],
+    "reference_answer": "拆分原则:按业务领域(DDD限界上下文)/按团队边界/按变更频率。不该拆:团队<10人/业务边界不清/没有微服务运维能力(监控/部署/追踪)/QPS不高单体足够。渐进:先模块化单体(Modular Monolith)边界清晰再拆。代价:分布式事务/调试困难/部署复杂度。不为微服务而微服务。",
+    "key_points": [
+      "按业务领域",
+      "团队<10不拆",
+      "先模块化",
+      "不为微服务",
+      "QPS不高别拆"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "DDD核心概念？怎么指导系统设计？",
+    "tags": [
+      "DDD",
+      "领域驱动"
+    ],
+    "reference_answer": "战略:Bounded Context限界上下文/Conext Map关系/Ubiquitous Language统一语言。战术:Entity有唯一标识/Value Object无标识不可变/Aggregate聚合根一致性边界/Domain Event领域事件/Repository仓储。指导:先识别Bounded Context→定聚合根→定义领域事件→通过事件API通信。核心价值对齐业务和技术语言。",
+    "key_points": [
+      "Bounded Context",
+      "Entity/Value Object/Aggregate",
+      "Domain Event",
+      "Repository",
+      "对齐业务技术语言"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "六边形架构/整洁架构是什么？",
+    "tags": [
+      "六边形",
+      "整洁架构",
+      "架构模式"
+    ],
+    "reference_answer": "核心:业务逻辑在中心不依赖外部框架。层次由内到外:Entities核心→Use Cases应用→Interface Adapter适配器→Frameworks框架。依赖方向向内:外层依赖内层内层不知道外层存在。好处:业务可独立测试(不启动框架)/替换框架不影响核心。不必教条核心是依赖方向向内和业务不耦合框架。",
+    "key_points": [
+      "业务中心不依赖框架",
+      "内→外:Entity→UseCase→Adapter",
+      "依赖方向向内",
+      "独立测试",
+      "不耦合框架"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "技术选型决策框架是什么？",
+    "tags": [
+      "技术选型",
+      "决策"
+    ],
+    "reference_answer": "维度:功能匹配/性能扩展/团队熟悉/社区生态/运维成本/锁定风险。流程:明确需求量化指标→候选方案2-3→POC验证→团队评审→决策记录(ADR)。原则:没有银弹;选够用且团队能驾驭的不选最先进的。",
+    "key_points": [
+      "六维度评估",
+      "POC验证",
+      "团队评审",
+      "决策记录ADR",
+      "选够用能驾驭"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "如何评估和偿还技术债？",
+    "tags": [
+      "技术债",
+      "重构"
+    ],
+    "reference_answer": "识别:代码坏味道/缺测试/过时依赖/缺文档/架构不合理。量化:登记Issue/Board/算修复成本vs不修代价。偿还:Boy Scout Rule每次改代码顺手改善/专项迭代每Sprint留20%时间还债/大重构充分测试+Strangler Fig渐进替换。优先级:影响开发效率>稳定性>可维护性。不是零才好是可控和有意识。",
+    "key_points": [
+      "识别→量化→偿还",
+      "Boy Scout Rule",
+      "Sprint 20%",
+      "Strangler Fig",
+      "可控有意识"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "什么是Strangler Fig Pattern？",
+    "tags": [
+      "Strangler Fig",
+      "重构",
+      "架构"
+    ],
+    "reference_answer": "渐进式替换遗留系统非一次性重写。流程:旧系统前加代理路由→新功能用新系统→逐步将旧功能迁移→旧功能越来越少→最终下线。类比绞杀榕缠绕宿主生长宿主枯死。关键:每次迁移小块可独立验证回滚/新旧共存需数据同步。适用:大型遗留重构/不停机重写。",
+    "key_points": [
+      "渐进替换",
+      "代理路由",
+      "每次小块",
+      "独立验证回滚",
+      "不停机"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "API版本管理策略有哪些？怎么向后兼容？",
+    "tags": [
+      "API",
+      "版本管理"
+    ],
+    "reference_answer": "URL路径/api/v1直观。Header Accept:application/vnd.api.v2 URL不变。Query参数?version=2不推荐缓存问题。向后兼容:只加不删改/废弃标记Deprecated保留2版本。Breaking Change必须升大版本旧版保留过渡期6-12月提前通知。CI中自动检测Breaking Change(openapi-diff)。",
+    "key_points": [
+      "URL路径最直观",
+      "只加不删改",
+      "Deprecated保留2版",
+      "过渡期6-12月",
+      "CI自动检测"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "如何设计可观测性体系？",
+    "tags": [
+      "可观测性",
+      "Metrics",
+      "Logs",
+      "Traces"
+    ],
+    "reference_answer": "Metrics+Logs+Traces通过TraceID关联。采集OpenTelemetry SDK→Collector聚合采样转发。存储Metrics→Prometheus;Logs→Loki;Traces→Tempo/Jaeger。展示Grafana统一看板三支柱联动。告警基于SLO(错误率>SLO阈值非CPU>80%)。所有服务接入;错误慢请求100%正常1-5%采样;日志JSON+trace_id。",
+    "key_points": [
+      "三大支柱关联",
+      "OpenTelemetry",
+      "Prometheus+Loki+Tempo",
+      "Grafana统一",
+      "基于SLO告警"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "SLA/SLO/Error Budget是什么？怎么驱动决策？",
+    "tags": [
+      "SLA",
+      "SLO",
+      "Error Budget"
+    ],
+    "reference_answer": "SLA对外承诺(99.9%不达标赔偿)。SLO内部目标(99.95%比SLA严)。Error Budget=100%-SLO=允许不可靠空间(0.05%≈每月22分钟)。驱动:Budget充足可激进发布/Budget快用完冻结发布优先修可靠性/Budget用完停所有非紧急变更。每周Review消耗;发布频率和Error Budget挂钩。",
+    "key_points": [
+      "SLA对外SLO对内",
+      "Error Budget=100%-SLO",
+      "充足→可发布",
+      "快用完→冻结",
+      "挂钩发布频率"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "技术方案Trade-off分析怎么做？",
+    "tags": [
+      "Trade-off",
+      "决策"
+    ],
+    "reference_answer": "框架:明确约束(时间/人力/预算/性能)→列选项→按维度打分→选最优。常见Trade-off:一致性vs可用性(CAP)/延迟vs吞吐(批量vs实时)/速度vs质量/灵活vs简单/Build vs Buy。表达:选A方案因X维度更优虽Y不如B但在我场景X更重要。没有完美只有当前约束下最合适。",
+    "key_points": [
+      "明确约束列表",
+      "按维度打分",
+      "一致性vs可用性",
+      "速度vs质量",
+      "当前约束最合适"
+    ]
+  },
+  {
+    "category": "architecture",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "系统设计面试答题框架和技巧？",
+    "tags": [
+      "系统设计",
+      "面试"
+    ],
+    "reference_answer": "框架45分钟:澄清需求3-5分钟功能/非功能(QPS/延迟/可用/数据量)→高层设计10分钟画核心组件数据流→深入设计20分钟选1-2核心深入(数据模型/API/关键算法)→扩展5-10分钟瓶颈/扩展/监控。技巧:主动提问/先广度后深度/量化Trad-off/\"这选了X因为...但Y更重要可选Z\"/承认不确定。面试官看思考过程非背答案。",
+    "key_points": [
+      "澄清→高层→深入→扩展",
+      "先广度后深度",
+      "量化QPS/延迟",
+      "讨论Trade-off",
+      "看思考过程"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "自我介绍怎么做？1分钟和3分钟版？",
+    "tags": [
+      "面试",
+      "自我介绍"
+    ],
+    "reference_answer": "1分钟:背景→2-3核心关键词→为什么对这个岗位感兴趣。3分钟:背景→2-3核心项目量化→技术成长线→为什么选这家。不是复述简历是预告片引起兴趣。禁忌:流水账/过度谦虚/背诵感/超3分钟。提前写稿练5遍做到自然但不随意；结尾留钩子引导面试官追问。",
+    "key_points": [
+      "1分钟=关键词",
+      "3分钟=项目+成长",
+      "预告片非简历",
+      "练5遍自然",
+      "留钩子"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "STAR法则是什么？怎么讲好项目故事？",
+    "tags": [
+      "面试",
+      "STAR"
+    ],
+    "reference_answer": "S背景/T职责/A行动(重点用'我')/R结果量化。加分:L Learning学到什么。每项目准备2-3不同角度故事(技术挑战/团队协作/决策权衡)。数字比形容词有说服力。关键:展示\"你的思考\"非\"项目介绍\"。\"我\"做了什么决策而非\"我们\"做了什么。",
+    "key_points": [
+      "STAR+L",
+      "用'我'非'我们'",
+      "量化结果",
+      "多个角度准备",
+      "数字>形容词"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "怎么回答\"你最大的缺点\"？",
+    "tags": [
+      "面试",
+      "缺点"
+    ],
+    "reference_answer": "原则:真实但不致命+正在改进。结构:缺点→具体表现→影响→改进措施→已有成效。好例:追求技术完美在非核心花太多时间→现在Sprint明确优先级区分必须做好和够用就行。坏例:太完美(假)/沟通差(致命)/没缺点(缺自知)。展示自我认知和成长能力非暴露硬伤。",
+    "key_points": [
+      "真实不致命",
+      "具体表现",
+      "改进措施",
+      "已有成效",
+      "缺点→成长"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "\"为什么离开上一家公司\"怎么回答？",
+    "tags": [
+      "面试",
+      "离职原因"
+    ],
+    "reference_answer": "正面表达不抱怨前司。方向:寻求更大挑战/方向调整不匹配/想接触不同规模领域。禁忌:说前司坏话/和领导冲突/纯因钱。结构:肯定前司收获→说明瓶颈→表达期待。\"上家完成从0到1搭建收获大但系统稳定期挑战少希望能接触更复杂分布式问题。\"",
+    "key_points": [
+      "正面不抱怨",
+      "肯定+瓶颈+期待",
+      "不说坏话",
+      "技术成长方向",
+      "不纯因钱"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "\"你的职业规划是什么\"怎么回答？",
+    "tags": [
+      "面试",
+      "职业规划"
+    ],
+    "reference_answer": "展示方向感和务实。结构:短期1-2年→中期3-5年→长期方向。\"短期深入分布式云原生积累架构经验。中期独立负责核心系统方向成为技术骨干。长期走技术专家路线深耕系统架构。\"和应聘岗位相关/学习意愿/非跳板暗示。",
+    "key_points": [
+      "短期→中期→长期",
+      "和岗位相关",
+      "展示学习意愿",
+      "技术专家路线",
+      "非跳板"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "\"和同事有过冲突吗\"怎么回答？",
+    "tags": [
+      "面试",
+      "冲突处理"
+    ],
+    "reference_answer": "承认冲突正常重点在怎么处理。结构:背景(方案分歧)→做法(倾听/数据支撑/寻求共识)→结果(一致/折中)。\"技术选型分歧各做POC数据说话最终数据证明我的方案延迟更低他也认可。\"禁忌:从没冲突/对方反派/强调听我的。",
+    "key_points": [
+      "冲突正常",
+      "倾听+数据",
+      "POC验证",
+      "折中方案",
+      "不强调听我的"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "\"你最有成就感的项目\"怎么回答？",
+    "tags": [
+      "面试",
+      "成就"
+    ],
+    "reference_answer": "选:技术深度+业务影响+个人独特贡献。结构:背景→核心挑战→你的方案(为什么这么做)→结果量化→影响。展示权衡思考(\"放弃X方案因为...\")和协作(\"推动跨团队对齐...\")。禁忌:只是执行者/只讲技术不讲影响/夸大个人。准备2-3不同维度成就故事。",
+    "key_points": [
+      "技术深度+影响",
+      "个人贡献",
+      "量化结果",
+      "权衡思考",
+      "2-3个故事"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "\"你失败过吗\"怎么回答？",
+    "tags": [
+      "面试",
+      "失败"
+    ],
+    "reference_answer": "展示诚实+反思+成长。结构:失败→原因(不甩锅)→补救→学到什么→如何避免。\"上线发现Bug测试未覆盖边界。立即回滚止血补测试用例推动上线Checklist制度。之后半年无类似问题。\"禁忌:从没失败/归咎他人/太致命失败(删生产DB)。",
+    "key_points": [
+      "诚实不甩锅",
+      "立即止血",
+      "补测试/制度",
+      "学到+预防",
+      "不太致命"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "\"你对加班怎么看\"怎么回答？",
+    "tags": [
+      "面试",
+      "加班"
+    ],
+    "reference_answer": "务实+责任感。好答:\"理解项目关键期需要投入但倾向于提高效率合理排期减少不必要加班。确实需要不推辞。关注可持续节奏长疲劳影响代码质量。\"禁忌:拒绝加班(太硬)/热爱加班(太假)/看加班费(太直接非HR面)。",
+    "key_points": [
+      "关键期需投入",
+      "提高效率减不必要",
+      "不推辞",
+      "可持续节奏",
+      "不卑不亢"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "\"你期望的薪资是多少\"怎么回答？",
+    "tags": [
+      "面试",
+      "薪资"
+    ],
+    "reference_answer": "给范围非具体表达灵活。准备:调研同级别市场价(脉脉/Levels.fyi)/明确底线和理想值。\"基于经验和市场调研期望范围X-Y具体会考虑整体package和岗位匹配度。\"尽量让对方先出价;给略高于期望范围留谈判空间。禁忌:给多少都行(不自信)/虚报过高(后续尴尬)。",
+    "key_points": [
+      "给范围",
+      "调研市场价",
+      "让对方先出",
+      "略高留空间",
+      "考虑整体package"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "面试最后\"你有什么想问我们\"怎么回答？",
+    "tags": [
+      "面试",
+      "反问"
+    ],
+    "reference_answer": "展示真实兴趣。好问:技术(最大挑战)/成长(核心目标)/文化(技术决策方式/Code Review)。禁忌:问薪资(HR面)/问基本信息(没做功课)/太多(2-3够)/没问题。原则:不做功课不问/真正关心才问/展示思考深度。",
+    "key_points": [
+      "技术/成长/文化",
+      "不问薪资(HR面)",
+      "2-3个够",
+      "不做功课不问",
+      "展示思考"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "\"你如何处理多个任务优先级冲突\"？",
+    "tags": [
+      "面试",
+      "优先级"
+    ],
+    "reference_answer": "框架+实例。\"四象限法(紧急/重要)排序。都紧急沟通领导确认或拆分委托。实例:上季同时A交付和B重构A硬DDL排前B拆小步穿插A间隙最终A按时B完成70%。\"主动沟通不是闷头做让领导知道取舍。",
+    "key_points": [
+      "四象限",
+      "沟通确认",
+      "拆分/委托",
+      "主动沟通",
+      "实例+框架"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "\"你怎么看待技术债务\"？",
+    "tags": [
+      "面试",
+      "技术债"
+    ],
+    "reference_answer": "适度可加速交付但必须能还。记录Issue评估影响Sprint留20%时间还债。影响稳定性优先/纯美观放低。反对两种极端:永远不欠交付太慢/永远不还系统腐化。技术债像金融杠杆有借有还信用好。",
+    "key_points": [
+      "适度加速",
+      "记录+评估",
+      "Sprint 20%",
+      "稳定优先",
+      "有借有还"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "\"你如何学习新技术\"？",
+    "tags": [
+      "面试",
+      "学习"
+    ],
+    "reference_answer": "路径:概念→适用场景(文档/博客)→动手POC→实际项目应→深入源码理解Why→总结输出(博客/分享)。\"学K8s:先Minikube→部署真实项目→遇问题看源码社区→团队分享。\"展示\"学什么\"的判断力非什么都学根据业务和趋势选择。",
+    "key_points": [
+      "概念→POC→实战→原理→输出",
+      "动手+输出",
+      "不是什么都学",
+      "根据业务选",
+      "分享博客"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "\"为什么选择我们公司\"？",
+    "tags": [
+      "面试",
+      "动机"
+    ],
+    "reference_answer": "做了功课+真诚匹配。结构:产品/公司吸引点→技术栈/团队吸引点→你能贡献。\"一直是你产品用户对XX技术实现感兴趣。JD中分布式架构正是我想深方向。过去经验可直接贡献。\"禁忌:因为大厂钱多/投很多公司/对公司一无所知。",
+    "key_points": [
+      "产品+技术+贡献",
+      "做了功课",
+      "真诚匹配",
+      "不谈钱",
+      "展示能贡献"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "medium",
+    "question_type": "soft_skill",
+    "content": "如何向非技术人员解释技术问题？",
+    "tags": [
+      "沟通",
+      "解释"
+    ],
+    "reference_answer": "用类比代术语;关注影响非实现;分层先结论再细节。'微服务'像大部门拆专业小组各独立运作需更好协调。'缓存'像常把电话存手机通讯录不用每次翻电话簿。'技术债'像信用卡现在方便但要还利息。观察对方反应困惑换说法不居高临下。",
+    "key_points": [
+      "类比非术语",
+      "影响非实现",
+      "先结论再细节",
+      "信用卡=技术债",
+      "不居高临下"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "Code Review中如何给有效反馈？",
+    "tags": [
+      "Code Review",
+      "反馈"
+    ],
+    "reference_answer": "对事不对人;分必须改和建议改;给具体建议非只说不好。好:'此处嵌套for O(n²)建议HashMap降O(n)'具体+方案。坏:'写得不好'模糊+无建设。分级[MUST]必须修Bug安全/[SUGGEST]优化/[QUESTION]不理解/[NIT]小问题不阻塞。Review是学习机会非找茬感谢贡献及时回复。",
+    "key_points": [
+      "对事不对人",
+      "分MUST/SUGGEST",
+      "具体+有方案",
+      "O(n²)→O(n)",
+      "学习非找茬"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "如何写好技术设计文档？",
+    "tags": [
+      "Design Doc",
+      "文档"
+    ],
+    "reference_answer": "结构:背景动机Why→目标非目标What→方案How架构图/数据模型/API→备选对比→风险缓解→里程碑。面向读者快速理解。图>文字/先结论再展开/核心2-4页。至少列2备选说明为什么选这个。",
+    "key_points": [
+      "Why→What→How",
+      "备选对比",
+      "风险+缓解",
+      "图>文字",
+      "2-4页核心"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "如何有效向上管理？",
+    "tags": [
+      "向上管理",
+      "沟通"
+    ],
+    "reference_answer": "让领导做选择题非问答题;主动汇报不等被问;带方案提问题。结论先行先说结果;风险提前暴露'目前风险X方案Y需您支持Z';对齐预期(交付物/deadline/优先级);拒绝协商'做A的话B延或砍您看取舍'。信任=靠谱说到做到+透明不瞒+有判断力非纯执行。",
+    "key_points": [
+      "选择非问答",
+      "主动汇报",
+      "风险提前",
+      "结论先行",
+      "靠谱+透明+判断力"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "medium",
+    "question_type": "soft_skill",
+    "content": "如何在技术团队中建立影响力？",
+    "tags": [
+      "影响力",
+      "成长"
+    ],
+    "reference_answer": "技术:解决别人不能解决的问题/高质量方案/Code Review认真有建设。知识:分享博客/帮助新人/最佳实践。跨团队:推动协作/技术委员发声/对外交流。影响力=能力×可见度。光有能力不表达别人不知道。从做好自己的事开始→帮助团队→影响组织。",
+    "key_points": [
+      "能力×可见度",
+      "解决难题",
+      "分享+帮助",
+      "跨团队",
+      "做好→帮助→影响"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "如何平衡技术深度和广度？",
+    "tags": [
+      "T型人才",
+      "成长"
+    ],
+    "reference_answer": "T型:一个方向深入(竖线)多方向了解(横线)。深度:1-2领域做到团队Top(分布式/前端/DB内核)。广度:了解上下游方便协作全局思考。时间分配:70%深度(当前工作)+20%广度(扩展视野)+10%探索(新技术)。先有深度再有广度。没深度的广度什么都知道什么都不精。",
+    "key_points": [
+      "T型一深多广",
+      "70/20/10时间",
+      "先深度后广度",
+      "上下游了解",
+      "没深度=不精"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "如何判断自己该跳槽？",
+    "tags": [
+      "跳槽",
+      "职业发展"
+    ],
+    "reference_answer": "该走:成长停滞半年没学新东西/方向与公司不匹配/文化价值观冲突/薪酬严重低于市场。不该走:暂时困难压力/和某同事不合(换团队成本低)/草总更绿。框架:列出Pros/Cons/设3月观察期/和信任的人讨论。不冲动裸辞/不只因钱除非差距>30%/关注去哪非逃离。",
+    "key_points": [
+      "成长停滞",
+      "方向不匹配",
+      "Pros/Cons",
+      "3月观察",
+      "去哪非逃离"
+    ]
+  },
+  {
+    "category": "general",
+    "difficulty": "easy",
+    "question_type": "soft_skill",
+    "content": "面试结束后该做什么？如何持续迭代面试能力？",
+    "tags": [
+      "面试",
+      "复盘"
+    ],
+    "reference_answer": "24h内记录题目和回答趁记忆新鲜。复盘:答好/卡壳/完全不会。补充:不会的题查资料下次不再失分。持续迭代:建面试题/模拟面试/每次后更新答案越来越精炼。心态:面试概率游戏被拒不等于你不行。持续投递持续改进。把每次面试当学习非审判。",
+    "key_points": [
+      "24h记录",
+      "复盘好/卡/不会",
+      "建题库",
+      "持续改进",
+      "面试=学习"
+    ]
   }
 ]
