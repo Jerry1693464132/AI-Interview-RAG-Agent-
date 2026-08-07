@@ -80,7 +80,7 @@ class QuestionGenerator:
         type_counts = self._distribute_question_types(question_count, question_types)
 
         # 2. RAG 检索：优先从题库取，不够的 LLM 补
-        SIM_THRESHOLD = 0.01  # RRF融合后分数较小，设低以命中bank题目
+        SIM_THRESHOLD = 0.014  # 高于此值才是真正相关，低于则不如让LLM生成
         bank_questions: list[dict] = []
         all_rag_context: list[dict] = []
         for qtype, needed in type_counts.items():
