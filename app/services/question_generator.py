@@ -79,18 +79,26 @@ class QuestionGenerator:
             question_types = list(self.DEFAULT_TYPE_DISTRIBUTION.keys())
         type_counts = self._distribute_question_types(question_count, question_types)
 
-        # 2. RAG 检索：优先从题库取，不够的 LLM 补
-        SIM_THRESHOLD = 0.014  # 高于此值才是真正相关，低于则不如让LLM生成
+        # 2. RAG 检索
+        SIM_THRESHOLD = 0.014
+        HARD_THRESHOLD = 0.018  # 最佳匹配低于此值 → 题库与岗位不相关，全部走 LLM
         bank_questions: list[dict] = []
         all_rag_context: list[dict] = []
+        best_score = 0.0
+
         for qtype, needed in type_counts.items():
             if needed <= 0:
                 continue
             results = await self.retriever.retrieve(
                 query=f"{job_title} {job_description} {qtype}",
                 top_k=needed * 3, question_type=qtype, difficulty=difficulty,
-                min_similarity=SIM_THRESHOLD,
+                min_similarity=0.0,  # 先不设最低分，后面手动判断
             )
+            # 记录最佳匹配分
+            for r in results:
+                if r.score > best_score:
+                    best_score = r.score
+
             taken = 0
             seen_contents = {q["content"] for q in bank_questions}
             for r in results:
@@ -108,12 +116,27 @@ class QuestionGenerator:
                 })
                 seen_contents.add(r.content)
                 taken += 1
-            # 剩余的该类型需要 LLM 生成
             type_counts[qtype] = needed - taken
 
-        logger.info("question_source", from_bank=len(bank_questions), to_generate=sum(type_counts.values()))
+        # 硬阈值判断：题库与岗位不相关 → 全部 LLM 生成
+        use_bank = best_score >= HARD_THRESHOLD
+        if not use_bank:
+            bank_questions = []
+            for qtype in type_counts:
+                type_counts[qtype] = type_counts.get(qtype, 0) + sum(
+                    b["question_type"] == qtype for b in bank_questions
+                )
+            # 重新计算: 所有类型都需要 LLM 生成
+            for qtype in list(type_counts.keys()):
+                type_counts[qtype] = question_count if type_counts else 0
+            # 按比例重新分配
+            type_counts = self._distribute_question_types(question_count, question_types)
 
-        # 3. 不够的用 LLM 补
+        logger.info("question_source", from_bank=len(bank_questions) if use_bank else 0,
+                    to_generate=question_count if not use_bank else sum(type_counts.values()),
+                    best_score=best_score)
+
+        # 3. 持久化
         questions: list[InterviewQuestion] = []
         idx = 0
         for q in bank_questions:
@@ -122,22 +145,22 @@ class QuestionGenerator:
                 session_id=interview_id, content=q["content"],
                 question_type=q["question_type"], difficulty=difficulty,
                 order_index=idx, reference_answer=q["reference_answer"],
-                key_points=q["key_points"], source_chunks=[q["source"]],
+                key_points=q["key_points"], source_chunks=["bank"],
             )
             session.add(question); questions.append(question)
 
+        llm_generated = []
         if sum(type_counts.values()) > 0:
             try:
-                generated = await self._generate_with_llm(
+                llm_generated = await self._generate_with_llm(
                     job_title=job_title, job_description=job_description,
-                    profile=profile, question_count=sum(type_counts.values()),
+                    profile=profile, question_count=question_count if not use_bank else sum(type_counts.values()),
                     difficulty=difficulty, type_counts=type_counts,
                     rag_context=all_rag_context,
                 )
             except Exception as exc:
                 logger.error("llm_generation_failed", error=str(exc))
-                generated = []
-            for q in generated:
+            for q in llm_generated:
                 idx += 1
                 question = InterviewQuestion(
                     session_id=interview_id, content=q["content"],
@@ -148,6 +171,27 @@ class QuestionGenerator:
                     source_chunks=["llm"],
                 )
                 session.add(question); questions.append(question)
+
+        # 方案B: LLM 生成的题自动入库，下次同岗位就能匹配
+        if llm_generated:
+            try:
+                from app.rag.embeddings import get_embedding_client
+                from app.rag.vector_store import VectorStore
+                client = get_embedding_client()
+                store = VectorStore(session)
+                texts = [q["content"] for q in llm_generated]
+                embeddings = await client.embed_batch(texts)
+                items = [{"content": q["content"], "embedding": e,
+                          "category": "llm_gen", "difficulty": difficulty,
+                          "question_type": q.get("question_type", "knowledge"),
+                          "tags": [job_title.replace(" ", "_").lower()],
+                          "reference_answer": q.get("reference_answer", ""),
+                          "key_points": q.get("key_points", [])}
+                         for q, e in zip(llm_generated, embeddings)]
+                await store.upsert_batch(items)
+                logger.info("auto_saved_to_bank", count=len(items))
+            except Exception as exc:
+                logger.warning("auto_save_failed", error=str(exc))
 
         await session.flush()
         logger.info(
