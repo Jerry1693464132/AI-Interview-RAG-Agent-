@@ -322,7 +322,8 @@ async function searchBank(){
   el.innerHTML='<p class="text-muted">搜索中...</p>';
   try{
     const resp=await fetch(`${API}/api/v1/questions/search`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,top_k:10,category:cat||undefined,difficulty:diff||undefined})});
-    const items=resp.json().data||[];
+    const j=await resp.json();
+    const items=j.data||[];
     if(!items.length){el.innerHTML='<div class="empty-state"><p>未找到匹配题目</p></div>';return}
     el.innerHTML=items.map(r=>`<div class="question-card">
       <div class="q-header"><strong>相似度 ${(r.score*100).toFixed(0)}%</strong> <span class="tag tag-skill">${r.metadata?.category||''} / ${r.metadata?.difficulty||''}</span></div>
