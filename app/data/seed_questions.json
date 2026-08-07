@@ -1424,5 +1424,983 @@
       "XXL-JOB",
       "幂等消费防重复"
     ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "请口头描述一下 JavaScript 的事件循环机制，以及宏任务和微任务的区别。",
+    "tags": [
+      "JavaScript",
+      "事件循环",
+      "宏任务",
+      "微任务"
+    ],
+    "reference_answer": "JS单线程通过事件循环实现异步。主线程执行完同步代码→清空微任务队列→取一个宏任务执行→循环。微任务在当前宏任务结束后立即执行优先级更高(Promise.then/MutationObserver/queueMicrotask)；宏任务包括setTimeout/setInterval/I/O/UI渲染。DOM更新后读布局信息用requestAnimationFrame(宏任务，渲染后执行)；需要当前同步代码后、下次渲染前执行的用微任务。Node.js事件循环有独立阶段(timers/poll/check)，process.nextTick优先级比Promise.then更高。",
+    "key_points": [
+      "宏任务vs微任务执行时机",
+      "Promise.then是微任务",
+      "setTimeout是宏任务",
+      "微任务优先级更高",
+      "Node.js与浏览器差异"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说说你对原型链的理解。它在实际开发中有什么意义？",
+    "tags": [
+      "JavaScript",
+      "原型链",
+      "继承"
+    ],
+    "reference_answer": "每个对象有内部链接指向原型对象，层层向上直到null形成链。访问属性时自身没有就沿链查找。实际意义：理解框架源码(Vue2通过修改Array.prototype拦截数组方法)、避免属性污染(for-in遍历原型链需hasOwnProperty)、性能(原型链过长影响查找速度)。class语法是原型链语法糖。",
+    "key_points": [
+      "原型链查找机制",
+      "Vue2 Array.prototype拦截",
+      "hasOwnProperty过滤",
+      "class是语法糖",
+      "属性查找性能"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "闭包在实际项目中有哪些应用场景？它会导致什么问题？",
+    "tags": [
+      "JavaScript",
+      "闭包",
+      "内存泄漏"
+    ],
+    "reference_answer": "闭包是函数记住创建时的词法作用域。应用场景：数据私有化(模块模式)、函数工厂(带配置的请求函数)、回调事件处理(定时器/事件监听/Promise)、柯里化(中间状态通过闭包保存)。问题：内存泄漏(闭包引用大对象未释放、未清理的事件监听器、DOM引用被闭包持有)。解决：手动解除引用、用WeakRef/WeakMap。",
+    "key_points": [
+      "数据私有化",
+      "函数工厂",
+      "React Hooks依赖闭包",
+      "内存泄漏",
+      "WeakMap解决"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "var、let、const 的区别是什么？为什么现在推荐用 const？",
+    "tags": [
+      "JavaScript",
+      "var",
+      "let",
+      "const"
+    ],
+    "reference_answer": "var函数作用域+变量提升+可重复声明。let/const块级作用域+暂时性死区+不可重复声明。const额外要求声明初始化且绑定不可变(对象内容仍可修改)。推荐const优先：传达'不会重新赋值'的意图，减少意外修改风险。只有确实需要重新赋值才用let。完全不用var避免函数作用域和提升隐患。",
+    "key_points": [
+      "函数作用域vs块级作用域",
+      "变量提升vs暂时性死区",
+      "const绑定不变但对象内容可变",
+      "优先const传达意图",
+      "不用var"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说说你对 this 绑定的理解。箭头函数和普通函数的 this 有什么区别？",
+    "tags": [
+      "JavaScript",
+      "this",
+      "箭头函数"
+    ],
+    "reference_answer": "普通函数四种绑定：默认(独立调用→window)、隐式(obj.method()→obj)、显式(call/apply/bind)、new(新实例)。优先级new>显式>隐式>默认。箭头函数无自己的this，捕获定义时外层作用域的this且永远不变，call/apply/bind无效，不能new。React类组件事件处理用箭头函数避免bind；Vue Options API不能用箭头函数定义methods(需动态绑定)。对象方法作为回调传递丢失this的解决方案：bind或箭头函数包裹。",
+    "key_points": [
+      "四种this绑定规则",
+      "优先级顺序",
+      "箭头函数捕获外层this",
+      "React vs Vue场景选择",
+      "回调丢失this的解决"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Promise 解决了什么问题？async/await 和 Promise 的关系是什么？",
+    "tags": [
+      "JavaScript",
+      "Promise",
+      "async/await"
+    ],
+    "reference_answer": "Promise解决回调地狱：链式调用拉平嵌套+统一错误处理(catch)+组合能力(all/race/allSettled)。async/await是Promise语法糖，让异步代码看起来像同步。async函数总是返回Promise，await暂停并等待resolve。底层仍是Promise和微任务。优先用async/await编写业务逻辑；并行执行/超时控制/竞态处理用Promise API。多个await串行不如Promise.all并行。",
+    "key_points": [
+      "回调地狱→链式调用",
+      "async/await是语法糖",
+      "底层仍是Promise",
+      "Promise.all并行",
+      "try-catch vs .catch"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "深拷贝和浅拷贝的区别是什么？实际项目中你怎么处理复杂对象的复制？",
+    "tags": [
+      "JavaScript",
+      "深拷贝",
+      "浅拷贝"
+    ],
+    "reference_answer": "浅拷贝只复制第一层引用，嵌套对象共享。深拷贝递归复制所有层级得到完全独立副本。实战策略：纯JSON数据用JSON.parse(JSON.stringify())简单但丢失特殊类型。通用场景用structuredClone()(原生支持Date/RegExp/Map/Set/循环引用)。框架用Immer实现结构化共享避免深拷贝开销。性能敏感场景避免不必要深拷贝，局部拷贝只改需要改的路径。",
+    "key_points": [
+      "浅拷贝一层vs深拷贝全层",
+      "structuredClone()原生方案",
+      "JSON方法局限",
+      "Immer结构化共享",
+      "避免不必要深拷贝"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说说你对 JavaScript 垃圾回收机制的理解。V8 的分代回收是怎么工作的？",
+    "tags": [
+      "JavaScript",
+      "垃圾回收",
+      "V8"
+    ],
+    "reference_answer": "V8分代回收：新生代(短命对象)用Scavenge算法(Cheney算法 From→To复制存活对象)，存活率低效率高。老生代(长命对象)用Mark-Sweep(标记清除)+Mark-Compact(标记整理消除碎片)。增量标记和并发标记减少STW。对象多次GC仍存活或To空间超阈值晋升老生代。启示：避免热路径大量创建短命对象、避免无意持有大对象引用、WeakRef/WeakMap缓存不阻止GC、Memory面板分析快照定位泄漏。",
+    "key_points": [
+      "新生代Scavenge",
+      "老生代Mark-Sweep/Compact",
+      "对象晋升",
+      "增量/并发标记",
+      "Memory面板"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "ES6 Module 和 CommonJS 的区别是什么？为什么前端项目都用 ESM？",
+    "tags": [
+      "JavaScript",
+      "ESM",
+      "CommonJS",
+      "模块化"
+    ],
+    "reference_answer": "核心区别：CommonJS运行时同步加载(require时执行返回exports)；ESM编译时静态分析(import/export解析阶段确定依赖)支持Tree Shaking。CommonJS导出值拷贝(源模块修改不影响已导入值)；ESM导出实时绑定(live binding)始终读到最新值。ESM顶层this是undefined。前端选ESM原因：Tree Shaking依赖静态分析、浏览器原生支持、异步加载适合网络、Vite/Rollup/Webpack5+以ESM为第一公民。",
+    "key_points": [
+      "运行时vs编译时",
+      "值拷贝vs实时绑定",
+      "Tree Shaking前提",
+      "浏览器原生ESM",
+      "Vite/Rollup优先ESM"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说说你对 WeakMap 和 WeakSet 的理解。它们解决了什么问题？",
+    "tags": [
+      "JavaScript",
+      "WeakMap",
+      "WeakSet",
+      "内存管理"
+    ],
+    "reference_answer": "WeakMap/WeakSet的key/value必须是对象且是弱引用，不阻止GC。不可迭代、无size/forEach/clear。核心解决'关联数据但不阻止GC'：DOM节点关联元数据(DOM移除后自动释放避免内存泄漏)、私有属性模拟(class内部WeakMap存私有字段)、缓存计算结果(对象被回收后缓存自动失效)。vs Map/Set：生命周期由你控制用Map/Set；生命周期由外部决定只想附带数据用WeakMap/WeakSet。",
+    "key_points": [
+      "弱引用不阻止GC",
+      "DOM关联元数据",
+      "私有属性模拟",
+      "缓存自动失效",
+      "vs Map/Set的选择"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "请描述一下浏览器从输入 URL 到页面渲染完成的完整过程。",
+    "tags": [
+      "浏览器",
+      "渲染",
+      "网络"
+    ],
+    "reference_answer": "网络阶段：DNS解析→TCP三次握手→TLS握手(HTTPS)→HTTP请求→服务器处理→响应返回。渲染阶段：HTML解析构建DOM树→CSS解析构建CSSOM树→合并为Render Tree→Layout(计算几何位置)→Paint(绘制像素)→Composite(合成图层)。关键细节：CSS阻塞渲染不阻塞DOM解析；JS阻塞DOM解析(除非async/defer)；transform/opacity只触发Composite跳过Layout/Paint，动画优先用它们。",
+    "key_points": [
+      "DOM+CSSOM→Render Tree",
+      "Layout→Paint→Composite",
+      "CSS阻塞渲染JS阻塞解析",
+      "transform/opacity只Composite",
+      "defer vs async"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "什么是重排和重绘？如何减少它们对性能的影响？",
+    "tags": [
+      "浏览器",
+      "重排",
+      "重绘",
+      "性能"
+    ],
+    "reference_answer": "重排(Reflow)重新计算元素几何信息，重绘(Repaint)重新绘制像素。重排必触发重绘，重绘不一定触发重排。触发重排：修改宽高/margin/padding/font-size/读取offsetTop/窗口resize/DOM增删。减少策略：批量修改DOM(DocumentFragment/cloneNode)、避免强制同步布局(循环中读写布局属性→布局抖动)、transform/opacity做动画(只触发合成层)、will-change提前创建合成层但别滥用、虚拟列表只渲染可视区、content-visibility:auto跳过屏幕外渲染。",
+    "key_points": [
+      "重排触发条件",
+      "布局抖动(读写交替)",
+      "transform/opacity跳过Layout",
+      "will-change慎用",
+      "批量DOM操作"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "说说你对 Critical Rendering Path（关键渲染路径）的理解。如何优化首屏渲染？",
+    "tags": [
+      "浏览器",
+      "首屏优化",
+      "CRP"
+    ],
+    "reference_answer": "关键渲染路径是从接收HTML/CSS/JS到首次渲染像素必须经过的步骤。优化策略：减少关键资源(内联首屏CSS/非关键CSS延迟/JS加defer)、减少关键路径长度(HTTP/2多路复用/CDN)、减少关键字节(压缩/WebP/字体子集/Tree Shaking)、优化渲染顺序(SSR/SSG直出HTML)、感知优化(骨架屏/渐进加载)。度量：FCP/LCP/TBT。",
+    "key_points": [
+      "内联首屏Critical CSS",
+      "非关键资源延迟加载",
+      "HTTP/2+CDN",
+      "SSR/SSG直出",
+      "FCP/LCP/TBT指标"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "浏览器缓存策略有哪些？强缓存和协商缓存怎么配合？",
+    "tags": [
+      "浏览器",
+      "缓存",
+      "HTTP"
+    ],
+    "reference_answer": "强缓存不发请求直接用本地副本(Cache-Control max-age/no-cache/no-store；Expires)。协商缓存发请求服务器返回304(ETag/If-None-Match；Last-Modified/If-Modified-Since)。配合策略：静态资源文件名hash+max-age一年→内容变URL变自然走新资源；HTML no-cache每次协商；API合理max-age或用ETag；敏感数据no-store；Service Worker可编程缓存。常见问题：HTML被强缓存导致用户看到旧版本→HTML永不强缓存+文件名hash+版本号meta。",
+    "key_points": [
+      "强缓存vs协商缓存",
+      "Cache-Control max-age",
+      "ETag vs Last-Modified",
+      "文件名hash策略",
+      "HTML不强缓存"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Web Worker 和 SharedWorker 解决了什么问题？实际项目中怎么用？",
+    "tags": [
+      "Web Worker",
+      "SharedWorker",
+      "性能"
+    ],
+    "reference_answer": "JS主线程同时负责UI渲染和脚本执行，耗时计算阻塞渲染导致卡顿。Web Worker把计算密集任务放后台线程(postMessage通信/不能访问DOM)。适合图像处理/大数据排序/加密解密。SharedWorker多页面共享一个Worker实例通过port通信，适合跨tab共享状态。注意事项：通信结构化克隆开销大(Transferable Objects零拷贝/SharedArrayBuffer共享内存)、Worker内错误不冒泡(onerror捕获)、用完terminate()。",
+    "key_points": [
+      "主线程渲染+脚本阻塞",
+      "postMessage通信",
+      "不可访问DOM",
+      "Transferable Objects",
+      "terminate()清理"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说说你对 Core Web Vitals 的理解。LCP、INP、CLS 分别衡量什么？",
+    "tags": [
+      "性能",
+      "Core Web Vitals",
+      "LCP",
+      "CLS"
+    ],
+    "reference_answer": "Core Web Vitals是Google定义的核心用户体验指标影响SEO排名。LCP最大内容绘制(加载性能目标2.5s)：优化关键资源/SSR/图片格式。INP交互到下次绘制(取代FID，响应性目标200ms)：减少主线程阻塞/拆分长任务/延迟非关键JS。CLS累积布局偏移(视觉稳定性目标0.1)：图片/视频设固定尺寸/字体font-display:optional/避免动态插入推挤已有内容。Lighthouse测量+Chrome DevTools定位+RUM收集真实数据。",
+    "key_points": [
+      "LCP<2.5s",
+      "INP<200ms替代FID",
+      "CLS<0.1",
+      "Lighthouse测量",
+      "RUM真实用户监控"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "如何优化长列表渲染？虚拟滚动的原理是什么？",
+    "tags": [
+      "性能",
+      "虚拟滚动",
+      "长列表"
+    ],
+    "reference_answer": "几千到几万条直接渲染所有DOM→内存爆炸+渲染卡顿。虚拟滚动原理：容器高度固定，根据scrollTop和itemHeight计算可视区起止索引，只渲染这个范围的DOM，预留buffer防白屏。定高简单直接算，不定高需预估+渲染后修正+ResizeObserver动态测量。快速滚动用节流或IntersectionObserver。成熟方案：react-virtuoso/vue-virtual-scroller/tanstack/virtual。小数据量用CSS content-visibility:auto可能就够了。",
+    "key_points": [
+      "只渲染可视区域",
+      "scrollTop+itemHeight算索引",
+      "buffer防白屏",
+      "定高vs不定高",
+      "react-virtuoso等成熟库"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "图片懒加载的实现原理是什么？有哪些现代方案？",
+    "tags": [
+      "性能",
+      "懒加载",
+      "图片"
+    ],
+    "reference_answer": "核心：延迟加载非可视区域图片减少初始请求和带宽。传统：IntersectionObserver监听进入视口→data-src替换src。现代：loading='lazy'浏览器原生懒加载零JS。进阶：占位符(LQIP低质量图)避免CLS、响应式图片srcset+sizes选合适尺寸、WebP/AVIF现代格式、首屏图片preload预加载(不能全lazy否则损害LCP)、decoding='async'异步解码。",
+    "key_points": [
+      "IntersectionObserver传统方案",
+      "loading=lazy原生方案",
+      "LQIP占位防CLS",
+      "srcset响应式",
+      "首屏preload不lazy"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说说你对浏览器安全模型的理解。同源策略限制了什么？",
+    "tags": [
+      "浏览器",
+      "安全",
+      "同源策略",
+      "CORS"
+    ],
+    "reference_answer": "同源策略限制不同源(协议+域名+端口)间交互防恶意网站窃取数据。限制：DOM访问(iframe.contentDocument)、Cookie/LocalStorage读写、AJAX/Fetch跨域请求。但img/script/link不受限(也是CSRF根源)。合法绕过：CORS(Access-Control-Allow-Origin)、JSONP(已淘汰)、postMessage(跨窗口通信)、代理(同源转发)。最佳实践：最小权限、CSP限制来源、SameSite Cookie、SRI。",
+    "key_points": [
+      "协议+域名+端口",
+      "DOM/Cookie/AJAX受限",
+      "CORS合法跨域",
+      "postMessage通信",
+      "CSP/SameSite/SRI"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "如何防范 XSS 和 CSRF 攻击？前端能做些什么？",
+    "tags": [
+      "安全",
+      "XSS",
+      "CSRF",
+      "前端安全"
+    ],
+    "reference_answer": "XSS(跨站脚本)前端防御：输出转义(React/Vue默认转义/dangerouslySetInnerHTML慎用)、CSP限制脚本来源禁用内联脚本、HttpOnly Cookie防token窃取。CSRF(跨站请求伪造)前端防御：SameSite Cookie(Strict/Lax限制跨站发送)、CSRF Token(请求头带token服务器校验)、Referer/Origin校验。共同原则：不信任用户输入、纵深防御(前端+后端+基础设施)、定期安全审计。",
+    "key_points": [
+      "输出转义防XSS",
+      "CSP限制脚本来源",
+      "HttpOnly Cookie",
+      "SameSite防CSRF",
+      "CSRF Token"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "React 的 Fiber 架构解决了什么问题？它是如何工作的？",
+    "tags": [
+      "React",
+      "Fiber",
+      "架构"
+    ],
+    "reference_answer": "React15 reconciler递归同步无法中断→大组件树更新主线程长时间占用→动画卡顿输入无响应。Fiber把渲染拆成可中断小单元(Fiber节点)，每个单元完成后可让出主线程(yield)，浏览器处理高优先级任务(用户输入/动画)后再继续。核心机制：双缓冲(current+workInProgress交替，切换指针commit)；优先级调度(用户交互>数据请求>过渡动画)；时间切片(每个Fiber约5ms配合requestIdleCallback)。影响：Concurrent Mode/useTransition/useDeferredValue依赖此特性。",
+    "key_points": [
+      "可中断渲染",
+      "双缓冲(current+workInProgress)",
+      "优先级调度",
+      "时间切片~5ms",
+      "Concurrent Mode基础"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "React Hooks 的设计动机是什么？它解决了 Class 组件的哪些问题？",
+    "tags": [
+      "React",
+      "Hooks",
+      "设计动机"
+    ],
+    "reference_answer": "Hooks解决逻辑复用困难和组件结构复杂化。Class问题：逻辑复用靠HOC/render props→wrapper hell；相关逻辑分散多个生命周期(订阅在didMount和didUpdate)；this绑定容易出错；class对minifier不友好。Hooks方案：自定义Hook让逻辑复用简单不改变组件结构；相关逻辑聚合(useEffect统一订阅/清理)；函数组件无this；状态逻辑从UI抽离。规则：顶层调用/不在条件循环中使用(底层依赖链表顺序)。",
+    "key_points": [
+      "wrapper hell→自定义Hook",
+      "逻辑聚合vs生命周期割裂",
+      "无this更简单",
+      "链表顺序→Hooks规则",
+      "eslint-plugin-react-hooks"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Vue 3 的 Composition API 和 React Hooks 有什么异同？",
+    "tags": [
+      "Vue",
+      "React",
+      "Composition API",
+      "Hooks"
+    ],
+    "reference_answer": "相似：都解决逻辑复用，按功能组织代码，支持自定义组合函数/Hook。核心差异：React Hooks每次渲染重新执行依赖闭包，需useCallback/useMemo稳定引用；Vue setup()只执行一次响应式变量持久化引用无需手动优化。React不可变数据+setState触发重渲染；Vue Proxy响应式自动追踪依赖修改即更新。React需手动memo/useMemo避免不必要渲染；Vue自动追踪精准更新。选择：熟悉React生态选React；偏好模板语法和自动响应式选Vue。",
+    "key_points": [
+      "闭包vs持久化引用",
+      "不可变vs Proxy响应式",
+      "手动优化vs自动追踪",
+      "自定义Hook/组合函数",
+      "没有绝对优劣"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说说你对 React 状态管理的理解。什么时候用 Context，什么时候用 Redux/Zustand？",
+    "tags": [
+      "React",
+      "状态管理",
+      "Context",
+      "Redux",
+      "Zustand"
+    ],
+    "reference_answer": "本地状态useState/useReducer。跨组件共享少量低频用Context+useContext(主题/语言/用户信息)。Context缺点：value变化所有消费者重渲染不适合高频更新状态。全局状态大量高频复杂逻辑：Redux Toolkit(严格单向数据流/DevTools/中间件适合大型应用)；Zustand/Jotai(轻量API简洁适合中小型)。服务端状态：TanStack Query/SWR管理缓存同步重试乐观更新。原则：能用props不用Context，能用Context不用全局库，服务端状态和业务状态分离。",
+    "key_points": [
+      "useState→Context→全局库→服务端状态",
+      "Context消费者全重渲染",
+      "Zustand轻量vs Redux完善",
+      "TanStack Query管服务端",
+      "不过早引入复杂方案"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Vue 3 的响应式系统是如何实现的？和 Vue 2 有什么区别？",
+    "tags": [
+      "Vue",
+      "响应式",
+      "Proxy",
+      "Object.defineProperty"
+    ],
+    "reference_answer": "Vue2用Object.defineProperty劫持getter/setter。局限：无法检测新增删除属性(需Vue.set)、无法监听数组索引和length、初始化递归遍历所有属性性能差。Vue3用Proxy重写：拦截所有操作(get/set/add/delete/has/ownKeys)无需Vue.set、惰性代理(访问嵌套属性才创建下一层代理)初始化性能大幅提升、支持Map/Set/WeakMap/WeakSet、更好TS支持。核心API：reactive(对象代理)/ref(基本类型)/computed(派生)/watchEffect(副作用)。注意：reactive解构丢响应性(用toRefs)、ref模板自动解包JS需.value。",
+    "key_points": [
+      "Object.defineProperty→Proxy",
+      "Vue.set→不需要",
+      "惰性代理提升性能",
+      "Map/Set/WeakMap支持",
+      "reactive解构用toRefs"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "React 的 useEffect 和 useLayoutEffect 有什么区别？什么时候用哪个？",
+    "tags": [
+      "React",
+      "useEffect",
+      "useLayoutEffect"
+    ],
+    "reference_answer": "useEffect绘制后异步执行不阻塞渲染适合数据请求/订阅/日志。useLayoutEffect DOM变更后绘制前同步执行会阻塞渲染适合测量元素尺寸/调整滚动位置/防闪烁。选择原则：默认useEffect。只有useEffect导致视觉闪烁(tooltip先错误位再正确位)才改用useLayoutEffect。常见误区：数据请求放useLayoutEffect阻塞首屏应该用useEffect；DOM测量放useEffect可能读到旧布局应改用useLayoutEffect。SSR注意useLayoutEffect服务端不执行需条件判断。",
+    "key_points": [
+      "useEffect异步不阻塞",
+      "useLayoutEffect同步阻塞",
+      "防闪烁场景用Layout",
+      "SSR不执行useLayoutEffect",
+      "默认useEffect"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说说你对 React Server Components（RSC）的理解。它和 SSR 有什么区别？",
+    "tags": [
+      "React",
+      "RSC",
+      "SSR",
+      "Next.js"
+    ],
+    "reference_answer": "SSR服务端渲染HTML发给客户端再hydrate恢复交互，组件代码仍要发送客户端。RSC组件在服务端执行结果序列化(RSC Payload)流式传输，客户端只接收渲染结果不下载组件代码。核心区别：SSR是渲染策略RSC是组件模型；RSC直接访问数据库/文件系统无需API层；RSC零客户端bundle大幅减JS体积；RSC和客户端组件无缝组合(服务端组件可渲染客户端组件反之不行但可通过children传递)。适用：数据展示为主(博客/文档/仪表盘)用RSC；交互性强的用客户端组件。Next.js App Router是主要实践平台。",
+    "key_points": [
+      "SSR渲染策略vs RSC组件模型",
+      "零客户端bundle",
+      "直接访问服务端资源",
+      "RSC Payload流式传输",
+      "Next.js App Router"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Vue 的 keep-alive 和 React 的 Suspense 分别解决了什么问题？",
+    "tags": [
+      "Vue",
+      "React",
+      "keep-alive",
+      "Suspense"
+    ],
+    "reference_answer": "keep-alive是Vue内置组件缓存不活跃组件实例避免重复创建销毁。解决问题：Tab切换/路由返回保留组件状态(表单/滚动位置/已加载数据)。激活走activated/deactivated钩子。缓存过多占内存用include/exclude/max控制。Suspense是React声明式异步加载机制。解决问题：异步组件/数据加载时fallback UI管理避免手动loading。子组件throw Promise→Suspense捕获显示fallback→Promise resolve渲染。配合Concurrent Mode实现选择性hydration/流式SSR。两者不是同一类东西：keep-alive是状态缓存，Suspense是异步加载声明。",
+    "key_points": [
+      "keep-alive缓存实例",
+      "activated/deactivated钩子",
+      "Suspense声明式异步",
+      "throw Promise机制",
+      "状态缓存vs异步加载"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "如何优化 React 应用的渲染性能？你的排查思路是什么？",
+    "tags": [
+      "React",
+      "性能优化",
+      "Profiler"
+    ],
+    "reference_answer": "排查：React DevTools Profiler录制→看哪些组件重渲染耗时多少→定位不必要重渲染(父组件重渲染导致子组件跟着渲染)。优化：结构调整(频繁变化状态下沉子组件)、memoization(React.memo包裹纯展示组件/useMemo/useCallback稳定props但不过度使用)、虚拟化长列表、状态管理selector只订阅需要的片段、并发特性useTransition标记非紧急更新不阻塞交互、代码分割React.lazy+Suspense按需加载。原则：先度量再优化，大多数应用不需要手动memo。",
+    "key_points": [
+      "Profiler录制定位",
+      "状态下沉",
+      "React.memo/useMemo",
+      "selector精准订阅",
+      "先度量再优化"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Vue 的 Teleport 和 React 的 Portal 有什么用？实际场景是什么？",
+    "tags": [
+      "Vue",
+      "React",
+      "Teleport",
+      "Portal"
+    ],
+    "reference_answer": "允许组件DOM渲染到当前组件树外任意位置但逻辑和状态保持在原组件树中。解决z-index层叠上下文问题(模态框/下拉菜单/Tooltip嵌套深层DOM中被overflow:hidden或z-index截断)。实际场景：全局弹窗/对话框渲染到body下、下拉选择器弹出层定位、Toast通知统一容器管理堆叠。注意：事件冒泡仍遵循组件树而非DOM树、SSR需特殊处理、无障碍确保焦点管理和ARIA正确。",
+    "key_points": [
+      "DOM位置vs逻辑位置分离",
+      "解决z-index/overflow问题",
+      "事件冒泡遵循组件树",
+      "SSR特殊处理",
+      "无障碍"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Webpack 和 Vite 的核心区别是什么？为什么 Vite 开发体验更好？",
+    "tags": [
+      "Webpack",
+      "Vite",
+      "构建工具"
+    ],
+    "reference_answer": "核心区别在开发服务器构建策略：Webpack开发时先打包整个应用再启动服务器项目越大启动越慢(分钟级)；Vite利用浏览器原生ESM按需编译请求的模块不打包启动几乎是瞬时。HMR：Webpack需重新打包受影响模块；Vite只需重新请求变更模块。生产构建：Vite用Rollup打包，Webpack用自有bundler。Vite优势：启动快/HMR快/配置简单/插件兼容Rollup。Webpack仍有价值：高度自定义构建/遗留项目/Module Federation更成熟。新项目优先选Vite。",
+    "key_points": [
+      "Webpack先打包vs Vite按需编译",
+      "ESM原生按需",
+      "启动速度对比",
+      "Rollup vs Webpack bundler",
+      "新项目优先Vite"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Tree Shaking 的原理是什么？为什么它依赖 ESM？",
+    "tags": [
+      "Tree Shaking",
+      "ESM",
+      "打包优化"
+    ],
+    "reference_answer": "构建时剔除未被使用的导出代码减小打包体积。原理：静态分析import/export→构建模块依赖图→标记哪些导出被引用/未引用→压缩阶段移除未引用导出。依赖ESM原因：ESM import/export是静态声明解析阶段确定依赖不需执行代码。CommonJS require是动态的可条件调用/函数内调用只有运行时才能确定导出了什么无法构建时静态分析。注意事项：sideEffects字段标记无副作用模块、barrel files(index.ts重导出)可能导致失效、用bundle-analyzer验证。",
+    "key_points": [
+      "静态分析import/export",
+      "标记未引用导出",
+      "压缩阶段移除",
+      "ESM静态vs CJS动态",
+      "sideEffects字段"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Monorepo 的优缺点是什么？主流工具有哪些？",
+    "tags": [
+      "Monorepo",
+      "Turborepo",
+      "Nx",
+      "pnpm"
+    ],
+    "reference_answer": "优点：代码共享方便(直接引用无需发包)、原子提交(跨项目重构一个PR)、统一工具链。缺点：仓库体积大clone慢、CI构建时间长(需增量构建)、权限粗粒度(不能按目录授权)、IDE性能影响。工具：pnpm workspace(轻量硬链接省磁盘)、Turborepo(增量构建/远程缓存/任务编排)、Nx(功能最全/依赖图分析/affected命令适合大型企业)。选择：小团队/少量包用pnpm workspace；中型用Turborepo；大型/复杂依赖用Nx。",
+    "key_points": [
+      "代码共享原子提交",
+      "pnpm硬链接",
+      "Turborepo增量构建",
+      "Nx依赖图分析",
+      "按团队规模选"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "TypeScript 的类型体操在实际业务中有价值吗？你怎么平衡类型安全和开发效率？",
+    "tags": [
+      "TypeScript",
+      "类型体操",
+      "最佳实践"
+    ],
+    "reference_answer": "实际价值：库/框架开发提供精准API类型推导(tRPC/Zod/Prisma)提升使用者体验；业务代码适度使用工具函数类型/API响应类型自动生成/表单schema类型推导投入产出比高。过度使用风险：可读性差/编译慢/新人上手难/维护成本高(CRUD搞复杂类型是浪费)。平衡原则：类型服务于业务不是炫技(30秒看不懂就简化)、优先用现成工具库(type-fest/ts-toolbelt)、API边界严格类型化内部适度宽松(可控使用any/as)、团队约定复杂度上限Code Review把关、类型覆盖率≠代码质量。",
+    "key_points": [
+      "库开发vs业务适度",
+      "类型服务于业务",
+      "现成工具库优先",
+      "边界严格内部宽松",
+      "覆盖率≠质量"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说说你对 Babel 的理解。它在现代前端工程中的角色发生了什么变化？",
+    "tags": [
+      "Babel",
+      "构建工具",
+      "SWC",
+      "esbuild"
+    ],
+    "reference_answer": "Babel核心功能语法转译(新语法→旧语法)+Polyfill注入(core-js按需)。历史角色ES6+普及期是必需品。现代变化：构建工具内置转译(Vite/Rollup/esbuild/SWC自带无需Babel)、Target上移(现代浏览器支持下需转译语法大幅减少)、Polyfill按需注入(useBuiltIns:'usage')。Babel仍有价值：需特定插件(React JSX/装饰器/Proposal语法)、支持老旧浏览器(IE11)、自定义语法转换(DSL/宏)。趋势：从必选变可选，esbuild/SWC接管大部分转译，Babel专注生态插件和边缘场景。",
+    "key_points": [
+      "语法转译+Polyfill",
+      "esbuild/SWC替代",
+      "target上移",
+      "useBuiltIns按需",
+      "Babel→可选(插件/边缘)"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "ESLint 和 Prettier 的职责有什么区别？如何配置让它们协同工作？",
+    "tags": [
+      "ESLint",
+      "Prettier",
+      "代码规范"
+    ],
+    "reference_answer": "ESLint关注代码质量和潜在bug(未使用变量/隐式类型转换/Hooks规则)。Prettier关注代码格式(缩进/引号/分号/换行)。重叠区域不协调会冲突。协同方案：Prettier负责所有格式化+ESLint关闭格式化规则(extends:['prettier']/eslint-config-prettier)+ESLint只保留代码质量规则。编辑器配置保存时先Prettier格式化再ESLint修复。CI中跑lint检查PR不通过不允许合并。扩展：Stylelint管CSS、markdownlint管文档、commitlint管提交信息。",
+    "key_points": [
+      "ESLint质量vs Prettier格式",
+      "eslint-config-prettier",
+      "保存时格式化+修复",
+      "CI lint检查",
+      "Stylelint/commitlint"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说说你对 CSS-in-JS 的理解。它和传统 CSS 方案相比有什么取舍？",
+    "tags": [
+      "CSS-in-JS",
+      "styled-components",
+      "CSS Modules",
+      "Tailwind"
+    ],
+    "reference_answer": "CSS-in-JS把样式写在JS中运行时或编译时生成CSS。优势：样式作用域天然隔离无命名冲突、动态样式方便(JS变量逻辑)、组件共置删除组件样式自动清理、TS类型检查。劣势：运行时方案有性能开销(序列化注入style标签)、包体积增加、调试不如传统CSS直观、IDE支持不如CSS文件。取舍：组件库/设计系统CSS-in-JS优势明显；内容型网站/SEO敏感用CSS Modules/Tailwind或编译时CSS-in-JS(zero-runtime如vanilla-extract/Linaria)避免运行时开销。趋势：编译时方案弥合差距。",
+    "key_points": [
+      "作用域隔离",
+      "动态样式",
+      "运行时vs编译时",
+      "zero-runtime趋势",
+      "场景选择"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "如何设计一个前端监控系统？需要采集哪些数据？",
+    "tags": [
+      "前端监控",
+      "性能",
+      "错误",
+      "Sentry"
+    ],
+    "reference_answer": "三类数据：性能(Core Web Vitals LCP/INP/CLS+资源加载+API响应+FPS用Performance API和web-vitals采集)；错误(JS运行时错误window.onerror/unhandledrejection+资源加载失败+API错误+白屏检测记录错误信息/堆栈/用户上下文)；行为(PV/UV/点击热力图/用户路径尊重隐私脱敏)。上报策略：采样降低成本、批量上报减少请求、Beacon API保证页面卸载数据不丢、SDK静默失败不影响业务。告警和分析：Sentry(错误)、Web Vitals+Grafana(性能)、PostHog(行为)。",
+    "key_points": [
+      "性能/错误/行为三类",
+      "web-vitals+Performance API",
+      "采样+批量+Beacon",
+      "SDK静默失败",
+      "Sentry+Grafana"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说说你对前端测试的理解。单元测试、集成测试、E2E 测试怎么选？",
+    "tags": [
+      "测试",
+      "单元测试",
+      "E2E",
+      "Jest",
+      "Playwright"
+    ],
+    "reference_answer": "测试金字塔：单元测试最多(纯函数/工具/Hook/状态管理，Jest/Vitest测边界条件和异常路径)；集成测试适量(组件交互/API调用/状态流转，Testing Library测用户行为+MSW mock API)；E2E最少(模拟真实用户完整流程，Playwright/Cypress只覆盖关键路径如登录/下单/支付)。选择：业务逻辑复杂多写单元、组件交互复杂多写集成、核心业务必须有E2E兜底。不追求100%覆盖率聚焦高风险区。写完代码补测试比不写测试好得多。",
+    "key_points": [
+      "金字塔:单元>集成>E2E",
+      "Testing Library测行为",
+      "MSW mock API",
+      "Playwright覆盖关键路径",
+      "不高追求覆盖率"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "如何优化前端项目的构建速度？",
+    "tags": [
+      "构建优化",
+      "Webpack",
+      "Vite",
+      "性能"
+    ],
+    "reference_answer": "缓存：Webpack cache:'filesystem'/Vite .vite缓存/Turborepo远程缓存(二次构建提速显著)。并行：thread-loader/Terser并行压缩/esbuild-SWC替代Babel-Terser(Rust-Go编写快10-100倍)。减少工作量：缩小loader/include范围、exclude node_modules、按需引入组件库、Tree Shaking、production mode。分包：合理splitChunks避免单chunk过大。开发特化：开发用esbuild/Vite生产用Rollup/Webpack、开发关闭sourcemap/压缩/lint。度量：speed-measure-webpack-plugin/Vite --debug build定位瓶颈。原则先度量再优化。",
+    "key_points": [
+      "缓存(二次提速)",
+      "esbuild/SWC替代Babel",
+      "缩小loader范围",
+      "合理splitChunks",
+      "先度量再优化"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "微前端解决了什么问题？有哪些主流方案？",
+    "tags": [
+      "微前端",
+      "qiankun",
+      "Module Federation"
+    ],
+    "reference_answer": "解决大型前端应用团队协作和技术演进瓶颈：单体代码量大构建慢发布耦合技术栈锁定团队互阻塞。微前端把大应用拆成独立开发独立部署子应用由主应用组装。主流方案：qiankun/micro-app(基于single-spa JS沙箱+CSS隔离+通信机制国内最广)；Module Federation(Webpack5/Rspack模块级共享去中心化架构)；iframe(天然隔离但通信体验差适合嵌入遗留系统)；Web Components(标准组件模型框架无关但生态不如专用方案)。选型：团队少别用微前端、统一技术栈选Module Federation、混杂选qiankun、老系统选iframe。",
+    "key_points": [
+      "独立开发部署",
+      "qiankun JS沙箱",
+      "Module Federation",
+      "iframe天然隔离",
+      "团队规模决定是否用"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "微前端的沙箱隔离是怎么实现的？有什么局限？",
+    "tags": [
+      "微前端",
+      "沙箱",
+      "Proxy",
+      "隔离"
+    ],
+    "reference_answer": "JS沙箱：Proxy沙箱(qiankun默认用Proxy拦截window读写每个子应用独立fakeWindow修改不影响真实window支持多实例)；快照沙箱(兼容IE激活前记录window快照失活恢复不支持多实例性能差)；iframe沙箱(天然隔离但通信成本高)。CSS隔离：Shadow DOM(真正隔离但弹窗Tooltip挂载body失效)；CSS Scoped(选择器加前缀模拟隔离)；CSS Modules/CSS-in-JS(天然作用域需子应用使用对应方案)。局限：全局事件需劫持/全局变量污染难完全隔离/第三方库绕过沙箱/Proxy拦截有性能开销。",
+    "key_points": [
+      "Proxy沙箱拦截window",
+      "快照沙箱兼容IE",
+      "Shadow DOM真正隔离",
+      "CSS Scoped前缀",
+      "第三方库可能绕过"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "微前端应用中，子应用之间如何通信？",
+    "tags": [
+      "微前端",
+      "通信",
+      "架构"
+    ],
+    "reference_answer": "按耦合度从低到高：URL/Query参数(最简单传递少量状态刷新不丢失)；CustomEvent(原生事件总线解耦但类型不安全调试困难)；共享状态库(主应用提供全局store如Zustand/Redux子应用订阅需要的slice)；Props传递(主应用通过mount生命周期传入回调和数据)；BroadcastChannel/Web Worker(跨tab跨线程通信特殊场景)。原则：能不用通信就不用子应用尽量自治、单向数据流优于双向、避免子应用直接互通信通过主应用中转、TypeScript定义通信契约类型安全。警惕过度通信可能拆分不合理。",
+    "key_points": [
+      "URL参数最简单",
+      "CustomEvent解耦",
+      "共享store订阅",
+      "Props传递",
+      "单向数据流"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "微前端项目的 CI/CD 怎么设计？和单体应用有什么区别？",
+    "tags": [
+      "微前端",
+      "CI/CD",
+      "DevOps"
+    ],
+    "reference_answer": "核心区别：子应用独立构建独立部署独立版本。设计要点：独立流水线(每个子应用自有构建测试部署流水线主应用只负责组装壳子)；版本管理(子应用语义化版本主应用通过配置引用版本灰度先部署子应用再更新主应用配置)；共享依赖(公共库独立发包子应用通过npm或Module Federation消费避免重复打包)；环境隔离(每子应用独立PR预览环境)；集成测试(子应用部署后触发集成测试验证和主应用兼容)；回滚(子应用问题只回滚该子应用)。挑战：版本兼容性测试/共享依赖升级连锁反应/部署顺序依赖。",
+    "key_points": [
+      "独立流水线",
+      "语义化版本",
+      "共享依赖管理",
+      "独立PR预览",
+      "子应用独立回滚"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "什么时候不应该用微前端？",
+    "tags": [
+      "微前端",
+      "架构决策",
+      "反模式"
+    ],
+    "reference_answer": "微前端不是银弹：团队小(<5人)或项目小(沟通成本低单体更高效)；业务高度耦合(子应用频繁通信共享大量状态拆分增复杂度)；技术栈统一且团队熟悉(单体+模块化就够了)；性能敏感(沙箱/通信/加载开销影响首屏)；团队缺乏基建能力(需脚手架/CI/CD/监控/文档支撑否则变分布式单体)；项目早期探索(需求不稳定频繁重构拆分边界难以确定)。替代方案：Monorepo+模块化(代码物理分离构建部署一体)、Feature Flags(功能开关控制发布无需拆分应用)、BFF(后端聚合前端保持简单)。原则：微前端是组织架构问题的技术方案。",
+    "key_points": [
+      "团队小别用",
+      "高度耦合别拆",
+      "性能敏感慎用",
+      "缺乏基建变分布式单体",
+      "Monorepo替代"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "HTTP/2 和 HTTP/3 的核心改进是什么？对前端有什么实际影响？",
+    "tags": [
+      "HTTP/2",
+      "HTTP/3",
+      "QUIC",
+      "网络"
+    ],
+    "reference_answer": "HTTP/2：多路复用(一个TCP连接并行多请求解决队头阻塞)、头部压缩(HPACK)、服务器推送(效果有限需谨慎)、二进制帧。HTTP/3：QUIC协议(UDP基础上解决TCP层队头阻塞→丢包只阻塞单流)、0-RTT连接建立(TLS和传输层握手合并)、连接迁移(用Connection ID标识切WiFi-4G不断连)。前端影响：域名收敛(HTTP/2不再需多域名分片)、资源合并收益降低(细粒度拆分利于缓存)、服务器推送不如preload可靠、HTTPS强制(HTTP/2/3都要求TLS)、移动端弱网体验提升。",
+    "key_points": [
+      "多路复用",
+      "HTTP/3 QUIC(UDP)",
+      "0-RTT",
+      "连接迁移",
+      "域名收敛"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说说你对 HTTPS 握手过程的理解。TLS 1.3 有什么改进？",
+    "tags": [
+      "HTTPS",
+      "TLS",
+      "安全",
+      "握手"
+    ],
+    "reference_answer": "TLS1.2握手(2-RTT)：ClientHello→ServerHello+Certificate+ServerKeyExchange→ClientKeyExchange+ChangeCipherSpec→Finished。两次往返后才能传输应用数据。TLS1.3改进：1-RTT握手(ServerHello直接包含密钥交换参数客户端可立即发送应用数据)；0-RTT恢复(PSK模式下ClientHello中就携带应用数据但需防重放仅适合幂等请求)；移除不安全算法(去掉RSA密钥交换/CBC模式/SHA-1只保留AEAD加密套件)；前向安全(所有密钥交换基于(EC)DHE即使服务器私钥泄露也无法解密历史通信)。前端影响：HTTPS性能提升安全基线提高。",
+    "key_points": [
+      "TLS1.2 2-RTT vs 1.3 1-RTT",
+      "0-RTT+PSK",
+      "移除RSA/CBC/SHA-1",
+      "前向安全(EC)DHE",
+      "HTTPS性能提升"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "CORS 预检请求（OPTIONS）什么时候会触发？如何减少它？",
+    "tags": [
+      "CORS",
+      "OPTIONS",
+      "预检",
+      "HTTP"
+    ],
+    "reference_answer": "触发条件(满足任一)：非简单方法(PUT/DELETE/PATCH)、非简单Content-Type(application/json)、自定义请求头(Authorization/X-Custom-Header)。减少策略：服务端设Access-Control-Max-Age缓存预检结果(常用86400秒24h不重复发送)；改用简单请求(POST+application/x-www-form-urlencoded或FormData牺牲JSON便利)；代理同源转发浏览器看到同源请求无CORS；WebSocket不受CORS限制(但有Origin校验)。注意：预检是安全机制不应为性能牺牲安全，Max-Age是最安全优化。",
+    "key_points": [
+      "非简单方法/Content-Type/自定义头",
+      "Access-Control-Max-Age缓存",
+      "简单请求替代",
+      "同源代理",
+      "安全>性能"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Content Security Policy（CSP）如何配置？常见的坑有哪些？",
+    "tags": [
+      "CSP",
+      "安全",
+      "XSS",
+      "HTTP"
+    ],
+    "reference_answer": "CSP通过HTTP头或meta标签限制资源来源防XSS。指令：default-src 'self'、script-src 'self' 'nonce-xxx'(内联脚本需nonce)、style-src 'self' 'unsafe-inline'、img-src 'self' https://cdn data:、connect-src 'self' https://api、frame-ancestors 'none'(防点击劫持)。常见坑：React/Vue SSR和analytics内联脚本需nonce或hash、第三方资源(字体CDN/埋点)遗漏白名单功能异常、先用Report-Only观察违规再强制、eval被禁某些库需'unsafe-eval'(不推荐)、base-uri/object-src容易被忽略但重要。最佳实践从严格策略开始逐步放宽。",
+    "key_points": [
+      "default-src/script-src",
+      "nonce/hash",
+      "Report-Only过渡",
+      "'unsafe-eval'慎用",
+      "从严格开始逐步放宽"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "SameSite Cookie 属性的三个值分别是什么？对前端有什么影响？",
+    "tags": [
+      "Cookie",
+      "SameSite",
+      "安全",
+      "CSRF"
+    ],
+    "reference_answer": "SameSite控制Cookie在跨站请求中是否发送。Strict(仅同站请求发送跨站跳转也不带Cookie安全性最高但UX差需重新登录)。Lax(现代浏览器默认顶级导航GET请求带Cookie POST/iframe/AJAX不带平衡安全和体验)。None(所有跨站请求都发送必须配合Secure属性仅HTTPS用于合法跨站如嵌入式widget/SSO)。前端影响：第三方Cookie逐步淘汰(广告/追踪需迁移Privacy Sandbox)、SSO/CAS跨域单点登录需显式SameSite=None;Secure并HTTPS、CSRF防护Lax/Strict本身提供防护可减少Token依赖、iframe嵌入Cookie行为受限需调整认证方案。",
+    "key_points": [
+      "Strict/Lax/None",
+      "Lax默认",
+      "None必须Secure",
+      "第三方Cookie淘汰",
+      "CSRF防护增强"
+    ]
   }
 ]
