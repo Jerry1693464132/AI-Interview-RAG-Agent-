@@ -9,6 +9,7 @@ FastAPI 应用入口 — app factory 模式。
     - /health 健康检查端点
 """
 
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator
@@ -43,6 +44,35 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info("redis_connected")
     except Exception:
         logger.warning("redis_unavailable")
+
+    # Mock 模式自动加载种子题库
+    if settings.app.USE_MOCK_DB:
+        try:
+            seed_file = Path(__file__).parent / "data" / "seed_questions.json"
+            if seed_file.exists():
+                import json
+                with open(seed_file, "r", encoding="utf-8") as f:
+                    questions = json.load(f)
+                from app.rag.embeddings import get_embedding_client
+                from app.rag.vector_store import VectorStore
+                from app.core.deps import get_db as _core_get_db
+                db_gen = app.dependency_overrides.get(_core_get_db)
+                if db_gen:
+                    db = db_gen()
+                    store = VectorStore(db)
+                    client = get_embedding_client()
+                    texts = [q["content"] for q in questions]
+                    # 分批调用，每批 10 条避免 400
+                    embeddings = []
+                    for i in range(0, len(texts), 10):
+                        batch = texts[i:i+10]
+                        embeddings.extend(await client.embed_batch(batch))
+                        await asyncio.sleep(0.5)
+                    items = [{"content": q["content"], "embedding": e, "category": q.get("category", "general"), "difficulty": q.get("difficulty", "medium"), "question_type": q.get("question_type", "knowledge"), "tags": q.get("tags", []), "reference_answer": q.get("reference_answer", ""), "key_points": q.get("key_points", [])} for q, e in zip(questions, embeddings)]
+                    await store.upsert_batch(items)
+                    logger.info("seed_data_loaded", count=len(items))
+        except Exception as exc:
+            logger.warning("seed_data_load_failed", error=str(exc))
 
     yield
 
