@@ -3354,5 +3354,973 @@
       "预留扩展不提前",
       "定期重构"
     ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 的 GIL 是什么？它对你的项目有什么实际影响？",
+    "tags": [
+      "Python",
+      "GIL",
+      "并发"
+    ],
+    "reference_answer": "GIL是CPython保护引用计数的一把互斥锁同一时刻只有一个线程执行Python字节码。CPU密集多线程无法利用多核；IO密集影响不大(等待IO时GIL释放)。应对：CPU密集用multiprocessing/ProcessPoolExecutor；IO密集用asyncio；计算下沉到C扩展(NumPy/PyTorch)绕过GIL；Python3.13 free-threaded模式(实验性)可关闭GIL。核心：GIL是CPython实现细节非语言规范。先看任务是CPU还是IO密集再定并发模型。",
+    "key_points": [
+      "CPython互斥锁",
+      "CPU密集→多进程",
+      "IO密集→asyncio",
+      "NumPy/PyTorch绕过",
+      "3.13 free-threaded实验"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 的垃圾回收机制是怎样的？引用计数有什么缺陷？",
+    "tags": [
+      "Python",
+      "GC",
+      "引用计数"
+    ],
+    "reference_answer": "CPython用引用计数为主分代GC为辅。每个对象有引用计数归零立即释放确定性高。缺陷：无法处理循环引用(A引B B引A计数永不为零)。分代GC(三代)定期扫描解决循环引用但增加延迟和开销。实践：with语句管理资源；避免不必要循环引用；内存敏感用weakref打破循环；gc.collect()可手动触发但一般不需要。",
+    "key_points": [
+      "引用计数+分代GC",
+      "循环引用缺陷",
+      "weakref打破循环",
+      "with管理资源",
+      "gc.collect手动"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 装饰器的原理是什么？实际项目中你怎么用？",
+    "tags": [
+      "Python",
+      "装饰器",
+      "设计模式"
+    ],
+    "reference_answer": "本质是高阶函数接收函数返回新函数@语法糖调用。新函数在原函数前后插入逻辑不修改原函数代码。场景：认证(@login_required)/日志(@log)/重试(@retry指数退避)/缓存(@lru_cache)/限流(@rate_limit)/耗时统计(@timing)/参数校验(@validate)。设计：functools.wraps保留元信息；支持带参数装饰器(三层嵌套)；可叠加；避免过度嵌套。装饰器适合横切关注点不适合业务逻辑。",
+    "key_points": [
+      "高阶函数+@语法糖",
+      "functools.wraps",
+      "带参数=三层嵌套",
+      "横切关注点",
+      "不过度嵌套"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "生成器和迭代器的区别是什么？什么场景下用生成器？",
+    "tags": [
+      "Python",
+      "生成器",
+      "迭代器"
+    ],
+    "reference_answer": "迭代器实现了__iter__/__next__是遍历协议。生成器是特殊迭代器用yield定义自动维护状态。核心优势：惰性求值不一次性加载所有数据到内存，百万行日志/大文件/无限序列时内存恒定。场景：日志逐行处理、数据管道中间步骤、流式API响应(yield from)、协程通信(send/throw)。注意：只能遍历一次、不能用len()或索引、性能敏感考虑itertools C实现。",
+    "key_points": [
+      "迭代器协议vs yield",
+      "惰性求值省内存",
+      "大文件/无限序列",
+      "yield from",
+      "一次性消费"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Python 深浅拷贝和可变默认参数问题？",
+    "tags": [
+      "Python",
+      "深浅拷贝",
+      "默认参数"
+    ],
+    "reference_answer": "浅拷贝(copy)只复制第一层嵌套对象共享引用。深拷贝(deepcopy)递归复制所有层级。可变默认参数陷阱：def f(lst=[])中默认参数函数定义时只求值一次所有调用共享同一列表多次调用累积数据。正确做法：默认值用None函数体内lst=lst if lst is not None else[]。影响：配置字典/缓存列表/批量收集器都容易踩坑。Code Review重点检查默认参数是否可变。",
+    "key_points": [
+      "浅拷贝一层vs深拷贝递归",
+      "可变默认参数共享",
+      "None默认值",
+      "Code Review检查点"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 的上下文管理器（with 语句）原理是什么？怎么自定义？",
+    "tags": [
+      "Python",
+      "上下文管理器",
+      "with"
+    ],
+    "reference_answer": "with调用__enter__获取资源，退出时无论是否异常都调用__exit__释放。自定义：类实现__enter__/__exit__；或用contextlib.contextmanager装饰器把生成器变上下文管理器。场景：数据库连接/事务/文件句柄/分布式锁获取释放/临时环境切换/性能计时。__exit__返回True会吞异常一般不要做；异常信息通过参数传入__exit__可做日志。",
+    "key_points": [
+      "__enter__+__exit__",
+      "contextmanager装饰器",
+      "yield资源",
+      "无论异常都释放",
+      "不吞异常"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Python 的元类是什么？实际项目中哪里会用到？",
+    "tags": [
+      "Python",
+      "元类",
+      "type"
+    ],
+    "reference_answer": "元类是创建类的类(type是默认元类)。通过__new__/__init__控制类的创建过程。场景：ORM(SQLAlchemy/Django Model用元类收集字段定义)/自动注册路由/抽象基类强制子类实现/单例模式。原则：元类是黑魔法99%业务不需要；能用装饰器或基类不用元类；团队中元类代码必须有清晰文档。",
+    "key_points": [
+      "type是默认元类",
+      "控制类创建",
+      "ORM字段收集",
+      "99%不需要",
+      "能用装饰器不用元类"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Python 中 *args 和 **kwargs 的作用？参数传递是值传递还是引用传递？",
+    "tags": [
+      "Python",
+      "参数",
+      "引用"
+    ],
+    "reference_answer": "*args收集位置参数为元组**kwargs收集关键字参数为字典。参数传递：Python是传对象引用(pass by object reference)。既非纯值传递也非纯引用传递。不可变对象(int/str/tuple)表现得像值传递(修改创建新对象)；可变对象(list/dict)表现得像引用传递(原地修改影响外部)。面试不要说'Python是引用传递'要说'传的是对象引用但绑定是局部的'。",
+    "key_points": [
+      "*args=元组,**kwargs=字典",
+      "传对象引用",
+      "不可变像值传递",
+      "可变像引用传递",
+      "绑定是局部的"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 的 __slots__ 是什么？什么场景下用？",
+    "tags": [
+      "Python",
+      "__slots__",
+      "内存优化"
+    ],
+    "reference_answer": "默认Python对象用__dict__存属性(字典)灵活但内存大。__slots__声明固定属性列表用数组存储省内存访问快。收益：内存减40-50%；属性访问更快；防止动态添加属性。适用：需大量实例的类(游戏实体/数据点/ORM行对象)。限制：不能动态加属性；不支持多继承时父类有__dict__；调试不能随意加属性。原则：profile确认内存瓶颈后再用不过早优化。",
+    "key_points": [
+      "__dict__→数组存储",
+      "内存减40-50%",
+      "大量实例场景",
+      "不能动态加属性",
+      "profile后再用"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 的包管理机制？pip、Poetry、uv 怎么选？",
+    "tags": [
+      "Python",
+      "包管理",
+      "Poetry",
+      "uv"
+    ],
+    "reference_answer": "pip+requirements.txt最基础手动管理无依赖解析适合脚本。pip-tools(pip-compile生成lock文件)保证可复现适合中小型。Poetry依赖管理+虚拟环境+打包发布一体化lock文件依赖解析强适合库开发和正式项目。uv(Rust编写速度极快兼容pip接口快速崛起)。脚本用pip；服务用pip-tools或Poetry；库发布用Poetry；追求速度试uv。核心：必须有lock文件保证环境可复现。",
+    "key_points": [
+      "pip-tools可复现",
+      "Poetry一体化",
+      "uv极快Rust",
+      "lock文件必须",
+      "可复现环境"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 的类型注解在实际项目中的价值？",
+    "tags": [
+      "Python",
+      "类型注解",
+      "mypy"
+    ],
+    "reference_answer": "价值：IDE补全和重构支持；静态检查(mypy/pyright)提前发现bug；代码即文档降低理解成本；团队减少沟通成本。实践：新项目全量标注；老项目渐进(从公共API开始)；Protocol做结构化子类型(duck typing类型化)；泛型用于容器和工具函数。注意：类型注解是提示不是强制运行时不检查；运行时校验用Pydantic；mypy strict模式但允许局部ignore。",
+    "key_points": [
+      "mypy静态检查",
+      "代码即文档",
+      "渐进式添加",
+      "Protocol结构化子类型",
+      "运行时校验用Pydantic"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 的异常处理最佳实践是什么？",
+    "tags": [
+      "Python",
+      "异常",
+      "最佳实践"
+    ],
+    "reference_answer": "原则：捕获具体异常非裸except；异常带上下文信息(raise XxxError(f'xxx failed: {detail}') from e)；不吞异常(pass)；资源清理用finally或with。分层设计：底层抛具体异常(DatabaseError/TimeoutError)中间层转换包装顶层统一捕获返回友好信息。自定义异常按业务域建层次(AppError→PaymentError→InsufficientBalanceError)。反模式：用异常控制流程(性能差难读)；except Exception一把抓；日志只记message不记traceback。",
+    "key_points": [
+      "捕获具体异常",
+      "raise from带上下文",
+      "分层异常设计",
+      "不用异常控流程",
+      "记traceback"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Python 的 dataclass 和 Pydantic BaseModel 怎么选？",
+    "tags": [
+      "Python",
+      "dataclass",
+      "Pydantic"
+    ],
+    "reference_answer": "dataclass标准库轻量自动生成__init__/__repr__/__eq__适合内部数据结构DTO配置对象不做运行时校验。Pydantic BaseModel运行时类型校验序列化反序列化JSON Schema生成默认值工厂适合API输入输出配置管理数据管道。纯内部传递用dataclass；需校验序列化API交互用Pydantic；性能极敏感用__slots__ dataclass或NamedTuple。Pydantic v2用Rust核心性能大幅提升FastAPI生态标配。",
+    "key_points": [
+      "dataclass轻量",
+      "Pydantic运行时校验",
+      "API用Pydantic",
+      "内部用dataclass",
+      "v2 Rust核心更快"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 中的猴子补丁（Monkey Patching）是什么？什么时候用？",
+    "tags": [
+      "Python",
+      "猴子补丁",
+      "测试"
+    ],
+    "reference_answer": "运行时动态替换模块/类/实例的属性或方法无需修改源码。合法场景：测试mock外部依赖(unittest.mock.patch)；热修复紧急bug(临时补丁等发版)；适配第三方库。风险：隐式修改难追踪/影响全局/多线程不安全/升级后补丁失效。能不用就不用；必须用时加注释说明原因和移除条件；测试mock用完自动还原。",
+    "key_points": [
+      "运行时替换",
+      "测试mock",
+      "热修复",
+      "隐式难追踪",
+      "用完还原"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 的 import 机制是怎样的？循环导入怎么解决？",
+    "tags": [
+      "Python",
+      "import",
+      "循环导入"
+    ],
+    "reference_answer": "import流程：查sys.modules缓存→找模块文件(sys.path)→编译字节码→执行模块代码→存入sys.modules。循环导入：A import B B又import A执行到一半模块还没初始化完。解决：延迟导入(import放函数体内)；重构提取公共模块；TYPE_CHECKING块(仅类型检查时导入)；合并模块。循环导入通常是设计问题的信号优先重构而非绕过。",
+    "key_points": [
+      "sys.modules缓存",
+      "延迟导入防循环",
+      "TYPE_CHECKING",
+      "重构优先",
+      "设计问题信号"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "FastAPI、Django、Flask 怎么选？",
+    "tags": [
+      "Python",
+      "FastAPI",
+      "Django",
+      "Flask",
+      "选型"
+    ],
+    "reference_answer": "FastAPI异步优先类型注解驱动自动OpenAPI文档性能高(Starlette+Uvicorn)适合API服务/微服务/AI推理。Django全栈(ORM/Admin/Auth/Template)电池齐全适合内容管理/后台系统。Flask微框架灵活轻量扩展丰富适合小项目/原型/高度自定义。纯API选FastAPI；全栈后台选Django；小工具/原型选Flask。团队熟悉度也是重要因素。",
+    "key_points": [
+      "FastAPI异步API",
+      "Django全栈后台",
+      "Flask轻量原型",
+      "按场景+团队选"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "FastAPI 的依赖注入系统是怎么工作的？",
+    "tags": [
+      "FastAPI",
+      "依赖注入",
+      "Depends"
+    ],
+    "reference_answer": "通过Depends()声明依赖FastAPI自动解析依赖图实例化注入管理生命周期。支持嵌套依赖/yield依赖(类似上下文管理器)/类依赖。用途：DB session管理/当前用户获取/权限校验/分页参数解析/请求限流。优势：解耦业务和基础设施；可测试(override依赖)；可组合(小依赖拼大依赖)。yield依赖清理在响应返回后执行；依赖有缓存(同一请求内相同依赖只执行一次)。",
+    "key_points": [
+      "Depends声明",
+      "自动解析注入",
+      "yield生命周期",
+      "可测试override",
+      "请求级缓存"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Django ORM 的 N+1 问题怎么解决？",
+    "tags": [
+      "Django",
+      "ORM",
+      "N+1",
+      "性能"
+    ],
+    "reference_answer": "问题：循环中逐条访问关联对象每次触发SQL100篇文章取作者变101条查询。解决：select_related(外键/一对一JOIN一次查出)；prefetch_related(多对多/反向外键额外IN查询)。进阶：only()/defer()控制字段；annotate()聚合避免额外查询；raw()处理复杂SQL；django-debug-toolbar检测N+1。开发开debug toolbar监控查询数上线前review慢查询。",
+    "key_points": [
+      "select_related(JOIN)",
+      "prefetch_related(IN)",
+      "debug toolbar",
+      "annotate聚合",
+      "上线前review"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Django 的中间件和 FastAPI 的中间件有什么区别？",
+    "tags": [
+      "Django",
+      "FastAPI",
+      "中间件"
+    ],
+    "reference_answer": "都是洋葱模型请求→view→响应的拦截层适合横切关注点。Django中间件：同步(ASGI可async)有5个钩子更细粒度适合认证/CSRF/日志/压缩。FastAPI中间件基于Starlette天然async只有request/response两阶段。Django中间件SYNC历史遗留新项目用ASGI。共同适合认证/CORS/日志/限流/压缩。",
+    "key_points": [
+      "洋葱模型",
+      "Django 5钩子更细",
+      "FastAPI async天然",
+      "认证/CORS/日志",
+      "横切关注点"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Django 的信号（Signals）机制你怎么看？",
+    "tags": [
+      "Django",
+      "Signals",
+      "事件"
+    ],
+    "reference_answer": "信号是Django内置观察者模式model save/delete时触发接收者响应。优势：解耦(不在model写业务逻辑)/快速实现。劣势：隐式调用难追踪/执行顺序不确定/调试困难/容易滥用变幽灵逻辑。简单场景(审计日志/缓存失效)可用；复杂流程用显式service层或MQ；团队约定信号边界避免变全局事件总线。",
+    "key_points": [
+      "观察者模式",
+      "解耦但隐式",
+      "审计/缓存用",
+      "复杂流程别用",
+      "约定边界"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Flask 的 Blueprint 和 FastAPI 的 APIRouter 解决什么问题？",
+    "tags": [
+      "Flask",
+      "FastAPI",
+      "Blueprint",
+      "Router"
+    ],
+    "reference_answer": "解决大型应用路由和视图组织单文件几百路由不可维护。Blueprint(Flask)路由分组可设URL前缀/独立中间件/模板目录按业务域拆分。APIRouter(FastAPI)类似额外支持tags(文档分组)/dependencies(路由级依赖)/prefix。按业务域拆分内聚；避免按技术层拆分。",
+    "key_points": [
+      "路由组织",
+      "按业务域拆分",
+      "URL前缀",
+      "tags/dependencies",
+      "避免技术层拆分"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python Web 框架中如何做请求参数校验？",
+    "tags": [
+      "Python",
+      "参数校验",
+      "FastAPI"
+    ],
+    "reference_answer": "FastAPI：Pydantic Model自动校验类型不对直接422零额外代码。Django：Serializer(DRF)或Form类手动校验用clean()。Flask：marshmallow/pydantic手动集成。通用原则：入口校验(格式/类型/范围)→业务校验(逻辑一致性/权限)→永远不信任客户端输入→校验失败返回明确错误非500。",
+    "key_points": [
+      "Pydantic自动422",
+      "DRF Serializer",
+      "入口→业务两层",
+      "不信任客户端",
+      "明确错误信息"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python Web 服务的部署架构是怎样的？Gunicorn/Uvicorn 的角色？",
+    "tags": [
+      "部署",
+      "Gunicorn",
+      "Uvicorn",
+      "Nginx"
+    ],
+    "reference_answer": "架构：Nginx(反向代理/静态文件/TLS)→Gunicorn/Uvicorn(WSGI/ASGI服务器)→应用代码。Gunicorn WSGI多worker适合Django/Flask同步。Uvicorn ASGI支持async适合FastAPI可配合Gunicorn管理worker。Worker数=CPU核数×2+1(经验需压测)；超时设置；graceful restart；健康检查端点。",
+    "key_points": [
+      "Nginx→服务器→应用",
+      "Gunicorn WSGI",
+      "Uvicorn ASGI",
+      "Worker=2N+1",
+      "health check"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Django 的 Auth 系统怎么扩展？JWT 和 Session 怎么配合？",
+    "tags": [
+      "Django",
+      "Auth",
+      "JWT",
+      "Session"
+    ],
+    "reference_answer": "扩展Auth：自定义User Model(AbstractBaseUser/AbstractUser)；自定义Authentication Backend(OAuth/LDAP/手机号登录)。Session内置适合传统Web应用服务端存session。JWT djangorestframework-simplejwt适合API/移动端/微服务Access短期+Refresh长期。配合：Web页面用Session(简单安全)；API/移动端用JWT；SSO用JWT+黑名单(Redis)主动失效。",
+    "key_points": [
+      "AbstractUser扩展",
+      "自定义Backend",
+      "Session Web",
+      "JWT API/移动",
+      "Access+Refresh"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Python Web 框架中如何做后台任务？",
+    "tags": [
+      "后台任务",
+      "Celery",
+      "BackgroundTasks"
+    ],
+    "reference_answer": "轻量：FastAPI BackgroundTasks(请求级进程内不持久化)。重量：Celery+Redis/RabbitMQ(分布式任务队列支持定时/重试/优先级)。新兴：ARQ(async Redis队列)/Dramatiq/Huey(轻量)。简单异步用BackgroundTasks；需可靠性/重试/定时用Celery；async项目用ARQ。注意：后台任务必须幂等；失败有重试和告警；任务结果需持久化。",
+    "key_points": [
+      "BackgroundTasks轻量",
+      "Celery重量分布式",
+      "ARQ async",
+      "幂等+重试+告警",
+      "结果持久化"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "asyncio 的事件循环是怎么工作的？和线程模型有什么本质区别？",
+    "tags": [
+      "Python",
+      "asyncio",
+      "事件循环",
+      "并发"
+    ],
+    "reference_answer": "事件循环是单线程调度器管理所有协程。协程在await点主动让出控制权事件循环切换到其他就绪协程。vs线程：线程OS调度(抢占式)协程程序员控制(协作式)；线程有GIL和上下文切换开销协程切换极轻量；线程有竞态风险单线程协程天然无锁。适用IO密集不适用CPU密集。async不是更快是更省：同样并发量资源消耗更少。",
+    "key_points": [
+      "单线程调度器",
+      "await主动让出",
+      "协作式vs抢占式",
+      "IO密集适用",
+      "更省非更快"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "async/await 中常见的坑有哪些？",
+    "tags": [
+      "Python",
+      "async",
+      "坑"
+    ],
+    "reference_answer": "第一阻塞混入：async里调time.sleep()/requests.get()卡住事件循环要用aiohttp/asyncio.sleep。第二忘记await得到协程对象非结果静默失败。第三异常处理：gather中一个失败默认不取消其他需return_exceptions=True。第四共享状态：await点之间状态可能被其他协程修改。第五资源泄漏：async with管理连接/session不关泄漏。",
+    "key_points": [
+      "阻塞混入",
+      "忘记await",
+      "gather异常",
+      "await间状态",
+      "async with"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "asyncio.gather 和 asyncio.TaskGroup 有什么区别？",
+    "tags": [
+      "Python",
+      "asyncio",
+      "gather",
+      "TaskGroup"
+    ],
+    "reference_answer": "gather并发执行多协程返回结果列表一个失败不影响其他。TaskGroup(3.11+)结构化并发所有任务完成或任一失败时整体退出失败自动取消其他任务异常通过ExceptionGroup聚合。新项目优先TaskGroup更安全更清晰；需部分成功部分失败用gather+return_exceptions。",
+    "key_points": [
+      "gather独立执行",
+      "TaskGroup结构化并发",
+      "失败自动取消",
+      "ExceptionGroup聚合",
+      "3.11+新特性"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 中线程池和进程池怎么选？",
+    "tags": [
+      "Python",
+      "线程池",
+      "进程池"
+    ],
+    "reference_answer": "线程池(ThreadPoolExecutor)IO密集(网络/文件)共享内存通信方便但受GIL影响。进程池(ProcessPoolExecutor)CPU密集绕过GIL利用多核但进程间通信有序列化开销。口诀：等IO用线程/算数用进程/高并发IO用asyncio。进程池传参需可pickle；进程数≤CPU核数；线程数根据IO等待比例(2-4倍核数)。",
+    "key_points": [
+      "IO→线程",
+      "CPU→进程",
+      "高IO→asyncio",
+      "进程数≤核数",
+      "线程数2-4倍核"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "aiohttp 和 httpx 怎么选？异步 HTTP 客户端的最佳实践？",
+    "tags": [
+      "Python",
+      "aiohttp",
+      "httpx",
+      "async"
+    ],
+    "reference_answer": "aiohttp纯async成熟稳定API偏底层。httpx同步+异步双模式API兼容requests支持HTTP/2类型注解完善。新项目用httpx(API友好/双模式)；已有aiohttp生态继续用。最佳实践：复用Client/Session实例(连接池)；设超时(connect/read/write)；async with管理生命周期；并发用gather/TaskGroup非循环await。",
+    "key_points": [
+      "httpx双模式推荐",
+      "aiohttp成熟",
+      "复用Session",
+      "设超时",
+      "gather非循环await"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 的 multiprocessing 模块中，进程间通信有哪些方式？",
+    "tags": [
+      "Python",
+      "多进程",
+      "通信"
+    ],
+    "reference_answer": "Queue进程安全队列适合生产者消费者。Pipe双向/单向管道适合两进程通信。Manager共享dict/list/Value/Array底层代理方便但性能差。共享内存multiprocessing.shared_memory(3.8+)零拷贝适合大数组(NumPy)。简单消息传Queue；大数据共享用shared_memory；复杂共享状态用Manager注意性能。",
+    "key_points": [
+      "Queue生产者消费者",
+      "Pipe两进程",
+      "Manager代理",
+      "shared_memory零拷贝",
+      "NumPy大数组用共享内存"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "异步代码中如何做超时控制和取消？",
+    "tags": [
+      "Python",
+      "async",
+      "超时",
+      "取消"
+    ],
+    "reference_answer": "超时：asyncio.wait_for(coro,timeout=N)超时抛TimeoutError；asyncio.timeout()(3.11+)上下文管理器。取消：task.cancel()在下一个await点注入CancelledError；协程内部try/except CancelledError做清理。场景：外部API调5秒超时；用户取消操作cancel后台任务；级联取消(父取消时子也取消)。CancelledError别随意吞否则取消失效；finally做资源清理。",
+    "key_points": [
+      "wait_for超时",
+      "TimeoutError",
+      "task.cancel()",
+      "CancelledError清理",
+      "级联取消"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 的 concurrent.futures 和 asyncio 怎么配合？",
+    "tags": [
+      "Python",
+      "asyncio",
+      "executor"
+    ],
+    "reference_answer": "场景：async代码中需调阻塞同步库(如某些SDK只支持同步)。方案：loop.run_in_executor(None,sync_func,args)把同步函数丢线程池/进程池返回awaitable。默认executor是线程池；CPU密集用ProcessPoolExecutor；线程池大小要限制防打满。能全async就全async；实在有同步依赖才用executor桥接；避免频繁跨界调用。",
+    "key_points": [
+      "run_in_executor桥接",
+      "默认线程池",
+      "CPU用进程池",
+      "限制池大小",
+      "能async全async"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 中如何实现一个限流器？",
+    "tags": [
+      "Python",
+      "限流",
+      "令牌桶",
+      "Redis"
+    ],
+    "reference_answer": "单机：令牌桶(threading.Lock+时间戳计算)或asyncio.Semaphore限制并发数。分布式：Redis+Lua脚本(原子扣减)或Redis INCR+EXPIRE滑动窗口。框架：FastAPI用slowapi或自定义中间件；Django用django-ratelimit。关键：限流粒度(IP/用户/接口)；限流响应(429+Retry-After)；分布式用Redis全局一致。",
+    "key_points": [
+      "令牌桶单机",
+      "Redis+Lua分布式",
+      "Semaphore限并发",
+      "429+Retry-After",
+      "IP/用户/接口粒度"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 的协程和 Go 的 goroutine 有什么区别？",
+    "tags": [
+      "Python",
+      "Go",
+      "协程",
+      "goroutine"
+    ],
+    "reference_answer": "调度：Python协作式(必须await让出)Go抢占式(runtime自动调度)。并发度：Python单线程事件循环一协程阻塞影响全部；Go M:N多线程一goroutine阻塞不影响其他。生态：Python async不彻底(很多库不支持)；Go标准库全面支持并发。性能：Go goroutine创建切换更轻量调度器更成熟。结论：Python async够用非最强并发模型；CPU密/高并发考虑Go/Rust或多进程。",
+    "key_points": [
+      "协作式vs抢占式",
+      "单线程vs M:N",
+      "生态不彻底vs全面",
+      "够用非最强",
+      "高并发考虑Go"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Pandas 处理大数据集时的性能瓶颈和优化手段？",
+    "tags": [
+      "Python",
+      "Pandas",
+      "性能"
+    ],
+    "reference_answer": "瓶颈：全量加载内存/object类型列性能差/逐行操作极慢。优化：指定dtype(category替代object/int32替代int64)；分块读取(chunksize)；向量化操作替代apply/iterrows；只读需要的列(usecols)；考虑Polars/Dask替代。先profile确认瓶颈再优化；大多数场景优化dtype+向量化就够了。",
+    "key_points": [
+      "dtype优化",
+      "category替代object",
+      "向量化替代apply",
+      "chunksize分块",
+      "Polars/Dask"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 数据管道（ETL）怎么设计？",
+    "tags": [
+      "Python",
+      "ETL",
+      "数据管道"
+    ],
+    "reference_answer": "分层：Extract(数据源适配)→Transform(清洗/转换/聚合)→Load(写入目标)。编排：Airflow/Prefect/Dagster管理DAG；简单用Cron+脚本。关键：幂等(重跑不重复)、增量处理(只处理新增变更)、数据质量校验(schema/空值率/范围)、失败重试告警。小规模脚本+Cron；中规模Prefect；大规模/复杂依赖Airflow。",
+    "key_points": [
+      "Extract→Transform→Load",
+      "Airflow/Prefect",
+      "幂等设计",
+      "增量处理",
+      "数据质量校验"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Python 中如何高效处理 JSON 数据？",
+    "tags": [
+      "Python",
+      "JSON",
+      "orjson"
+    ],
+    "reference_answer": "标准库json通用但性能一般。orjson Rust实现快3-10倍支持dataclass/numpy/datetime序列化。ujson C实现比标准库快。API服务/高吞吐用orjson；兼容优先用标准库；嵌套极深JSON用流式解析(ijson)避免全量加载。JSON解析通常是IO密集服务CPU热点profile后值得优化。",
+    "key_points": [
+      "orjson快3-10倍",
+      "Rust实现",
+      "ujson C实现",
+      "ijson流式解析",
+      "profile确认热点"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 中如何做数据校验和 Schema 管理？",
+    "tags": [
+      "Python",
+      "数据校验",
+      "Pydantic",
+      "Schema"
+    ],
+    "reference_answer": "Pydantic运行时校验+类型转换+JSON Schema生成FastAPI标配。Cerberus/Schema轻量字典校验适合配置文件。Great Expectations/Pandera DataFrame级数据质量校验(列类型/范围/空值率)。API入口用Pydantic；数据管道用Pandera/Great Expectations；配置文件用Pydantic Settings。校验失败要有明确错误信息。",
+    "key_points": [
+      "Pydantic API入口",
+      "Cerberus配置",
+      "Pandera DataFrame",
+      "Great Expectations",
+      "明确错误信息"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Python 中模型推理服务怎么设计？",
+    "tags": [
+      "Python",
+      "推理服务",
+      "FastAPI",
+      "GPU"
+    ],
+    "reference_answer": "框架：FastAPI+Uvicorn(轻量)/Triton Inference Server(GPU多模型)/TorchServe/BentoML。关键：模型预热(启动跑一次推理)；批处理(攒batch提高GPU利用率)；模型版本管理(A/B测试回滚)；健康检查(模型加载状态)。性能：async接口+线程池跑推理(不阻塞事件循环)；GPU推理CUDA Stream并行；结果缓存。无状态设计水平扩容；GPU用K8s device plugin调度。",
+    "key_points": [
+      "FastAPI轻量",
+      "Triton多模型",
+      "模型预热",
+      "batch提高GPU利用率",
+      "版本管理A/B测试"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Python 的虚拟环境管理？venv、conda、Docker 怎么选？",
+    "tags": [
+      "Python",
+      "虚拟环境",
+      "venv",
+      "conda",
+      "Docker"
+    ],
+    "reference_answer": "venv+pip标准方案轻量适合纯Python项目。conda管理Python版本+非Python依赖(CUDA/C库)适合数据科学/ML。Docker环境完全隔离适合部署和CI保证可复现。开发用venv/conda；部署用Docker；CI用Docker或GitHub Actions。核心：环境可复现依赖有锁文件。",
+    "key_points": [
+      "venv轻量纯Python",
+      "conda科学计算",
+      "Docker完全隔离",
+      "lock文件必须",
+      "可复现环境"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Python 项目中如何做日志管理？",
+    "tags": [
+      "Python",
+      "日志",
+      "structlog"
+    ],
+    "reference_answer": "标准方案：logging模块+结构化日志(JSON)。实践：用logger=logging.getLogger(__name__)非root logger；分级(DEBUG/INFO/WARNING/ERROR)；生产INFO起步；异常带traceback(exc_info=True)。结构化用structlog输出JSON方便ELK/Loki解析。热路径不打DEBUG(格式化也有开销)；敏感信息脱敏；日志和trace_id关联。",
+    "key_points": [
+      "结构化JSON",
+      "logging.getLogger(name)",
+      "生产INFO起步",
+      "traceback exc_info",
+      "trace_id关联"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 项目的测试策略是什么？pytest 的核心用法？",
+    "tags": [
+      "Python",
+      "测试",
+      "pytest"
+    ],
+    "reference_answer": "分层：单元(纯函数)→集成(API/数据库)→E2E(关键流程)。pytest核心：fixture(依赖注入scope控生命周期)；parametrize(参数化)；mock/patch(隔离外部依赖)；conftest.py(共享fixture)。测试文件按模块组织；fixture用yield做setup/teardown；数据库测试用事务回滚；CI跑全量+覆盖率。测试写行为不写实现；测试名描述场景和期望；单元测试<1秒。",
+    "key_points": [
+      "fixture依赖注入",
+      "parametrize参数化",
+      "mock/patch隔离",
+      "事务回滚",
+      "写行为不写实现"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "Python 项目的 CI/CD 流水线怎么设计？",
+    "tags": [
+      "Python",
+      "CI/CD",
+      "DevOps"
+    ],
+    "reference_answer": "阶段：lint(ruff/black/mypy)→test(pytest+coverage)→build(打包/Docker镜像)→deploy(K8s/云函数)。工具：GitHub Actions；Docker构建；K8s/EC2/Lambda部署。PR必须过lint+test才能合并；主分支保护；部署蓝绿/金丝雀；一键回滚；secrets用Vault不进代码。优化：缓存pip cache；并行跑测试；只在变更模块跑相关测试。",
+    "key_points": [
+      "lint→test→build→deploy",
+      "PR必须过检查",
+      "蓝绿/金丝雀部署",
+      "缓存加速",
+      "secrets不进代码"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 中如何做性能分析（Profiling）？",
+    "tags": [
+      "Python",
+      "Profiling",
+      "性能"
+    ],
+    "reference_answer": "CPU热点：cProfile(标准库函数级耗时)；py-spy(采样式不侵入可attach运行中进程)。内存：memory_profiler(逐行内存)；tracemalloc(标准库追踪分配)。IO/网络：async代码asyncio debug检测慢回调；网络tcpdump/wireshark。先profile再优化；关注热路径(80/20法则)；优化后重新profile验证；不凭直觉优化。",
+    "key_points": [
+      "cProfile函数级",
+      "py-spy采样不侵入",
+      "memory_profiler",
+      "tracemalloc",
+      "先profile再优化"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Python 项目如何管理配置？",
+    "tags": [
+      "Python",
+      "配置管理",
+      "Pydantic Settings"
+    ],
+    "reference_answer": "方案：环境变量(12-Factor)；.env文件+python-dotenv(开发)；Pydantic Settings(类型安全配置类)；配置中心(Nacos/Consul生产)。原则：配置和代码分离；敏感配置不进代码仓库；不同环境(dev/staging/prod)配置隔离；配置变更不需重新部署。",
+    "key_points": [
+      "12-Factor环境变量",
+      "Pydantic Settings类型安全",
+      "配置中心生产",
+      "代码分离",
+      "环境隔离"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 中如何做优雅的依赖注入？和 Java Spring 的 DI 有什么区别？",
+    "tags": [
+      "Python",
+      "依赖注入",
+      "DI"
+    ],
+    "reference_answer": "Python没有Spring重量级DI容器。常用：构造函数注入(最Pythonic)；FastAPI Depends；dependency-injector库(需要时用)。vs Spring：Python显式优于隐式不需注解扫描和容器管理；依赖关系代码中清晰可见；测试直接传mock。原则不过度设计：大多数项目构造函数注入+工厂函数就够了。",
+    "key_points": [
+      "构造函数注入最Pythonic",
+      "FastAPI Depends",
+      "显式优于隐式",
+      "直接传mock",
+      "不过度设计"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Python 的序列化方案怎么选？pickle、JSON、Protobuf、MessagePack？",
+    "tags": [
+      "Python",
+      "序列化",
+      "JSON",
+      "Protobuf"
+    ],
+    "reference_answer": "JSON通用可读跨语言体积大速度慢适合API交互。pickle Python专用能序列化几乎所有对象但反序列化可执行代码有安全风险仅限内部缓存。Protobuf体积小速度快需schema跨语言适合RPC高吞吐。MessagePack二进制JSON比JSON小20-30%无需schema适合内部服务。对外API用JSON；高吞吐用Protobuf/MessagePack；永远不反序列化不可信pickle。",
+    "key_points": [
+      "JSON通用API",
+      "pickle内部仅",
+      "Protobuf高吞吐",
+      "MessagePack二进制",
+      "不信pickle"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Python 项目中如何处理时区和日期？",
+    "tags": [
+      "Python",
+      "时区",
+      "datetime"
+    ],
+    "reference_answer": "原则：内部全部UTC存储计算展示时转用户时区。工具：datetime+zoneinfo(3.9+标准库)；arrow/pendulum更友好。坑：naive datetime(无时区)和aware datetime混用报错；数据库存UTC；API用ISO 8601带时区后缀。永远用aware datetime；永远显式指定时区；永远不在业务逻辑中用本地时间。",
+    "key_points": [
+      "UTC存储计算",
+      "zoneinfo标准库",
+      "aware datetime必用",
+      "ISO 8601传输",
+      "不用本地时间"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Python 项目如何做到可观测性（Logging + Metrics + Tracing）？",
+    "tags": [
+      "Python",
+      "可观测性",
+      "Logging",
+      "Metrics",
+      "Tracing"
+    ],
+    "reference_answer": "Logging：structlog结构化JSON关联trace_id。Metrics：prometheus_client暴露/metrics端点；关键指标QPS/延迟/错误率/队列深度/GC时间。Tracing：OpenTelemetry SDK自动手动注入span；跨服务传递trace context(W3C TraceContext)。日志→ELK/Loki；指标→Prometheus+Grafana；链路→Jaeger/Tempo。三者通过trace_id关联；日志记发生了什么/指标记多少多快/链路记在哪慢。",
+    "key_points": [
+      "structlog JSON",
+      "prometheus_client",
+      "OpenTelemetry",
+      "trace_id关联三者",
+      "ELK+Grafana+Jaeger"
+    ]
   }
 ]
