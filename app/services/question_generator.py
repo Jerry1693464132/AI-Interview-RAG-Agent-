@@ -172,26 +172,6 @@ class QuestionGenerator:
                 )
                 session.add(question); questions.append(question)
 
-        # 方案B: LLM 生成的题自动入库，下次同岗位就能匹配
-        if llm_generated:
-            try:
-                from app.rag.embeddings import get_embedding_client
-                from app.rag.vector_store import VectorStore
-                client = get_embedding_client()
-                store = VectorStore(session)
-                texts = [q["content"] for q in llm_generated]
-                embeddings = await client.embed_batch(texts)
-                items = [{"content": q["content"], "embedding": e,
-                          "category": "llm_gen", "difficulty": difficulty,
-                          "question_type": q.get("question_type", "knowledge"),
-                          "tags": [job_title.replace(" ", "_").lower()],
-                          "reference_answer": q.get("reference_answer", ""),
-                          "key_points": q.get("key_points", [])}
-                         for q, e in zip(llm_generated, embeddings)]
-                await store.upsert_batch(items)
-                logger.info("auto_saved_to_bank", count=len(items))
-            except Exception as exc:
-                logger.warning("auto_save_failed", error=str(exc))
 
         await session.flush()
         logger.info(
