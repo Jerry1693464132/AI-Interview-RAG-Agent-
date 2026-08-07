@@ -121,7 +121,19 @@
     <div id="resultContent"></div>
   </div>
 
-  <!-- 题目管理 -->
+  <!-- 题库搜索 -->
+  <div class="card">
+    <h2>🔍 题库搜索</h2>
+    <div class="form-row">
+      <div class="form-group"><label>搜索关键词</label><input type="text" id="searchQuery" placeholder="如：Agent、RAG、Python装饰器..."></div>
+      <div class="form-group"><label>分类</label><select id="searchCategory"><option value="">全部</option><option value="backend">后端</option><option value="ai_ml">AI/ML</option><option value="devops">DevOps</option><option value="general">通用</option></select></div>
+      <div class="form-group"><label>难度</label><select id="searchDifficulty"><option value="">全部</option><option value="easy">初级</option><option value="medium">中级</option><option value="hard">高级</option></select></div>
+    </div>
+    <button class="btn btn-primary" onclick="searchBank()">🔍 搜索</button>
+    <div id="searchResults" class="mt-16"></div>
+  </div>
+
+  <!-- 历史面试 -->
   <div class="card">
     <h2>📋 历史面试 <button class="btn btn-outline btn-sm" onclick="loadHistory()" style="margin-left:12px">刷新</button></h2>
     <div id="historyList"><div class="empty-state"><p>点击刷新加载历史记录</p></div></div>
@@ -299,6 +311,25 @@ async function generateQuestions(){
 
   btn.disabled=false;btn.textContent='🤖 重新生成题目';
   loadHistory();
+}
+
+async function searchBank(){
+  const query=document.getElementById('searchQuery').value;
+  if(!query){toast('请输入搜索关键词','error');return}
+  const cat=document.getElementById('searchCategory').value;
+  const diff=document.getElementById('searchDifficulty').value;
+  const el=document.getElementById('searchResults');
+  el.innerHTML='<p class="text-muted">搜索中...</p>';
+  try{
+    const resp=await fetch(`${API}/api/v1/questions/search`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,top_k:10,category:cat||undefined,difficulty:diff||undefined})});
+    const items=resp.json().data||[];
+    if(!items.length){el.innerHTML='<div class="empty-state"><p>未找到匹配题目</p></div>';return}
+    el.innerHTML=items.map(r=>`<div class="question-card">
+      <div class="q-header"><strong>相似度 ${(r.score*100).toFixed(0)}%</strong> <span class="tag tag-skill">${r.metadata?.category||''} / ${r.metadata?.difficulty||''}</span></div>
+      <div class="q-content">${r.content}</div>
+      ${r.metadata?.key_points?.length?`<div class="mt-8">${r.metadata.key_points.map(k=>`<span class="tag tag-skill">✅ ${k}</span>`).join(' ')}</div>`:''}
+    </div>`).join('');
+  }catch(e){el.innerHTML='<p class="text-muted">搜索失败</p>'}
 }
 
 async function loadHistory(){
