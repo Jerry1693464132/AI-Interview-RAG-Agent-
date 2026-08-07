@@ -639,5 +639,197 @@
       "稳定性vs动态性",
       "工程实践建议"
     ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "随着和 Agent 的不断对话，会出现什么问题？你如何解决？（上下文管理方案）",
+    "tags": [
+      "Agent",
+      "上下文管理",
+      "Memory"
+    ],
+    "reference_answer": "核心问题：token 超窗口报错、上下文太长导致响应变慢和成本飙升、关键信息被挤出窗口导致失忆。解决方案：1) 摘要压缩——对历史对话做摘要保留关键信息丢弃细节；2) RAG 检索——对话存向量库，需要时按需检索加载；3) 分层记忆——按信息重要性和生命周期分工作记忆/短期记忆/长期记忆三层管理。",
+    "key_points": [
+      "Token窗口限制",
+      "摘要压缩策略",
+      "RAG按需检索",
+      "分层记忆架构",
+      "成本与性能平衡"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "能具体讲讲分层记忆是怎么分的吗？",
+    "tags": [
+      "Agent",
+      "Memory",
+      "架构"
+    ],
+    "reference_answer": "核心思想是按信息重要性和生命周期分层管理。工作记忆存当前任务中间状态（正在查的订单号、已执行步骤）放变量里，任务结束就清。短期记忆存当前对话历史，放 messages 列表里，对话框关闭就没了。长期记忆存用户偏好、历史总结、重要事实，放数据库或向量库持久化，跨对话保留，这一层本质上就是 RAG。",
+    "key_points": [
+      "三层架构定义",
+      "工作记忆vs短期记忆vs长期记忆",
+      "各自的生命周期",
+      "长期记忆=RAG",
+      "实际存储方案"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "AI 应用怎么做成本控制？",
+    "tags": [
+      "成本控制",
+      "API",
+      "优化"
+    ],
+    "reference_answer": "AI API 按 token 计费。方案：1) 模型分级——简单任务用小模型，复杂任务用大模型，成本降 50%-80%；2) Prompt 缓存——相同前缀的 system prompt 缓存复用；3) 上下文裁剪——只保留最近 N 轮加摘要；4) 批量处理——非实时任务走 Batch API 价格减半；5) 结果缓存——相同问题直接返回缓存结果。",
+    "key_points": [
+      "模型分级策略",
+      "Prompt缓存机制",
+      "上下文裁剪",
+      "Batch API",
+      "结果缓存",
+      "成本与能力平衡"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "用户等 10 秒才出结果，延迟太高，你怎么优化？",
+    "tags": [
+      "性能优化",
+      "延迟",
+      "流式输出"
+    ],
+    "reference_answer": "延迟来源：网络延迟几十毫秒，模型推理 2-10 秒是大头，后处理约一百毫秒。优化重点：1) 流式输出——边生成边返回，感知延迟从 5 秒降到 0.5 秒，性价比最高；2) 并行调用——独立 LLM 调用并行执行；3) 预处理——离线阶段算好 Embedding 和文档分块；4) 小模型前置——先做意图识别减少大模型调用；5) 异步架构——非实时任务丢队列后台处理。",
+    "key_points": [
+      "延迟来源分析",
+      "流式输出(SSE)",
+      "并行vs串行",
+      "预处理策略",
+      "异步架构",
+      "感知延迟vs实际延迟"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "LLM 输出不稳定，同样问题可能给出不同答案甚至格式错误，如何应对？",
+    "tags": [
+      "稳定性",
+      "Prompt",
+      "容错"
+    ],
+    "reference_answer": "常见故障：格式不符预期（要 JSON 返回 markdown）、API 超时或限流（429）、模型幻觉编造信息、输出绕过安全限制。解决策略：1) 输出校验——用 JSON Schema 或 Pydantic 校验格式；2) 重试机制——指数退避重试处理临时错误；3) 降级策略——主模型挂了切备用或兜底回答；4) 温度控制——确定性场景用 temperature=0。",
+    "key_points": [
+      "输出格式校验",
+      "指数退避重试",
+      "降级与兜底",
+      "温度参数控制",
+      "429限流处理"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "你如何测评你的 Agent 的工作效果？",
+    "tags": [
+      "评测",
+      "Agent",
+      "质量保证"
+    ],
+    "reference_answer": "LLM 不确定，不能像传统软件那样断言输出等于某值。分三步：1) 建评测集——收集真实用例标注期望答案作为回归基准，每次改 prompt 或换模型后跑一遍看效果涨还是掉；2) 分任务选指标——标准答案任务算准确率/F1，开放生成用 LLM as a Judge 按标准打分，Agent 场景看过程（任务完成率、工具调用正确率）；3) 线上真实反馈——显式反馈（点赞点踩）+隐式反馈（追问、重试），持续迭代评测集。",
+    "key_points": [
+      "评测集构建",
+      "LLM as a Judge",
+      "Agent评估维度",
+      "线上反馈闭环",
+      "回归测试"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "你的 Agent 突然崩溃了，你如何排查问题？",
+    "tags": [
+      "故障排查",
+      "Agent",
+      "调试"
+    ],
+    "reference_answer": "排查步骤：1) 看错误日志+最后一次调用记录——崩溃前完整的 Prompt、调用了哪个工具、返回了什么，定位是模型输出格式错（解析报错）、工具调用失败（外部 API 挂/超时/429）、还是逻辑死循环（ReAct 没设终止条件，一直想一步做一步出不来）。格式/工具失败加输出校验和重试、外部调用加超时降级；死循环检查 max_steps 上限和状态判断逻辑。预防：做状态快照 checkpoint，每步存状态，崩溃从最后正常节点复现。",
+    "key_points": [
+      "错误日志分析",
+      "模型格式vs工具失败vs死循环",
+      "max_steps终止条件",
+      "checkpoint快照",
+      "外部调用超时降级"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说一下 LangChain 和 LangGraph 的区别？",
+    "tags": [
+      "LangChain",
+      "LangGraph",
+      "框架"
+    ],
+    "reference_answer": "同一团队出品，从链到图的升级。LangChain 核心抽象是 Chain，把步骤像流水线串起来执行，封装了模型接口、文档加载、向量库等组件，主打快速搭流程，但线性执行做循环很别扭。LangGraph 专为 Agent 这种带循环的复杂场景设计，核心抽象是 Graph，把流程建模成节点+边，天生支持循环（ReAct 的思考→行动→观察转圈）、条件分支、全局状态管理、人在环路。一句话：LangChain 适合线性固定流程，LangGraph 适合有循环有分支有复杂状态的 Agent。",
+    "key_points": [
+      "Chain vs Graph抽象",
+      "线性vs循环",
+      "状态管理",
+      "人在环路",
+      "适用场景对比"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "如何确保 Agent 不会选错工具？",
+    "tags": [
+      "Agent",
+      "工具调用",
+      "可靠性"
+    ],
+    "reference_answer": "选错工具根源在工具描述不好和候选太多。应对：1) 工具描述——name/description/参数说明本质是给模型的 prompt，描述清楚什么时候该用不该用，参数加类型和示例；2) 控制数量——工具多时做路由/分组，或用工具检索(RAG)先召回最相关的几个再让模型选；3) 参数校验+错误反馈——JSON Schema 校验，调用失败返回错误信息让模型自己纠正重试；4) 兜底——关键操作加人在环路确认，线下用评测集测工具选择准确率。",
+    "key_points": [
+      "工具描述质量",
+      "工具数量控制",
+      "RAG工具检索",
+      "参数校验+重试",
+      "人在环路兜底"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "多智能体系统里，怎么防止 Agent 之间循环调用？",
+    "tags": [
+      "Multi-Agent",
+      "循环调用",
+      "架构"
+    ],
+    "reference_answer": "多 Agent 系统常见问题：A调B、B调A形成死循环，token 爆炸。防法：1) 全局步数/深度上限——维护全局调用计数和深度，超阈值强制停；2) 结构避免环——用 Supervisor 模式，中心 Agent 统一调度子 Agent，子 Agent 只把结果交回主管不互相直接调；3) 记录调用链路——共享状态存调用轨迹，调之前检查是否刚调过或链路已出现该 Agent；4) 明确终止条件——每个 Agent 有清晰的任务完成判断，配合共享 State 判断整体是否达成。",
+    "key_points": [
+      "全局步数/深度限制",
+      "Supervisor模式防环",
+      "调用链路追踪",
+      "终止条件设计",
+      "共享State协调"
+    ]
   }
 ]
