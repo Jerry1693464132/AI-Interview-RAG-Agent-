@@ -178,12 +178,15 @@ def create_app() -> FastAPI:
 
                 # 向量/关键词搜索 — 基于 query + filters 做关键词匹配
                 if "question_bank" in sql.lower():
-                    # 提取搜索关键词
+                    # 提取搜索关键词（camelCase拆分 + 中英文分词）
+                    import re as _re
                     keywords = []
                     if params:
                         query_text = params.get("query", "")
                         if query_text:
-                            keywords = [w.lower() for w in query_text.split() if len(w) > 1]
+                            # camelCase拆分: aiagent -> [ai, agent], LLMAPI -> [llm, api]
+                            tokens = _re.findall(r'[A-Z][a-z]*|[a-z]+|[0-9]+|[一-鿿]+', query_text)
+                            keywords = [t.lower() for t in tokens if len(t) > 1]
                         for k in ["category", "difficulty", "question_type"]:
                             v = params.get(k, "")
                             if v: keywords.append(v.lower())
@@ -196,12 +199,18 @@ def create_app() -> FastAPI:
                         difficulty = (getattr(item, 'difficulty', '') or '').lower()
                         content = (getattr(item, 'content', '') or '').lower()
                         reference = (getattr(item, 'reference_answer', '') or '').lower()
-                        search_text = f"{content} {reference} {' '.join(tags)} {category}"
+                        # 扩展搜索文本：tags也用于匹配
+                        tag_text = ' '.join(tags)
 
-                        # 对每个关键词计算匹配分
+                        # 对每个关键词计算匹配分，同时检查子串匹配
                         score = 0.05
                         if keywords:
-                            hits = sum(1 for kw in keywords if kw in search_text)
+                            hits = 0
+                            for kw in keywords:
+                                if kw in content or kw in reference or kw in category or kw in tag_text:
+                                    hits += 1
+                                elif any(kw in t or t in kw for t in tags):
+                                    hits += 0.5
                             score = min(0.05 + hits * 0.15, 0.95)
 
                         row = MagicMock()
