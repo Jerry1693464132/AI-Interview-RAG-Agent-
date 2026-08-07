@@ -2,25 +2,16 @@
 数据库引擎与会话管理 — async SQLAlchemy 2.0 + pgvector。
 
 用法:
-    from app.core.database import get_session
     from app.core.deps import get_db
 
-    # FastAPI 注入
     @router.get("/items")
     async def list_items(db: AsyncSession = Depends(get_db)):
         result = await db.execute(select(Item))
         return result.scalars().all()
-
-    # 手动使用
-    async with get_session() as session:
-        session.add(item)
-        await session.commit()
 """
 
 import uuid
-from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import AsyncGenerator
 
 from sqlalchemy import DateTime, MetaData, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -56,20 +47,6 @@ async_session_factory = async_sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,
 )
-
-
-@asynccontextmanager
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    """获取数据库会话上下文管理器，退出时自动关闭。"""
-    async with async_session_factory() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
 
 
 # ---- ORM 基类 ----

@@ -16,7 +16,6 @@ if TYPE_CHECKING:
 
 class InterviewStatus:
     CREATED = "created"
-    MATCHING = "matching"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
 

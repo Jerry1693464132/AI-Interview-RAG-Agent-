@@ -46,10 +46,6 @@ class VectorStore:
     cosine similarity = 1 - cosine distance
     """
 
-    # 索引类型常量
-    INDEX_IVFFLAT = "ivfflat"
-    INDEX_HNSW = "hnsw"
-
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -206,39 +202,6 @@ class VectorStore:
             )
             for row in rows
         ]
-
-    # ---- 索引管理 ----
-
-    async def create_index(
-        self, index_type: str = INDEX_IVFFLAT, n_lists: int = 100
-    ) -> None:
-        """
-        创建向量索引以加速检索。
-
-        IVFFlat: 适合 < 1M 数据量，构建快
-        HNSW:    适合 > 1M 数据量，检索更快但构建慢
-        """
-        if index_type == self.INDEX_IVFFLAT:
-            sql = text(
-                f"""
-                CREATE INDEX IF NOT EXISTS idx_question_bank_embedding_ivfflat
-                ON question_bank USING ivfflat (embedding vector_cosine_ops)
-                WITH (lists = {n_lists})
-            """
-            )
-        elif index_type == self.INDEX_HNSW:
-            sql = text(
-                """
-                CREATE INDEX IF NOT EXISTS idx_question_bank_embedding_hnsw
-                ON question_bank USING hnsw (embedding vector_cosine_ops)
-            """
-            )
-        else:
-            raise ValueError(f"Unknown index type: {index_type}")
-
-        await self.session.execute(sql)
-        await self.session.commit()
-        logger.info("vector_index_created", type=index_type)
 
     async def count(self) -> int:
         """获取已向量化的记录数。"""
