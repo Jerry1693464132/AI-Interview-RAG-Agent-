@@ -2402,5 +2402,957 @@
       "第三方Cookie淘汰",
       "CSRF防护增强"
     ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Node.js 的事件循环和浏览器有什么区别？",
+    "tags": [
+      "Node.js",
+      "事件循环",
+      "浏览器"
+    ],
+    "reference_answer": "浏览器只有一个微任务队列在每个宏任务结束后统一清空。Node.js分六个阶段(timers/pending callbacks/idle-prepare/poll/check/close)每个阶段有自己的队列微任务在每个阶段切换时清空。关键差异：process.nextTick优先级高于Promise.then；setImmediate在check阶段setTimeout在timers阶段两者顺序在不同场景下可能不确定。实际影响：Node中异步代码执行顺序比浏览器更复杂调试需注意阶段上下文。",
+    "key_points": [
+      "六个阶段",
+      "每个阶段切换清空微任务",
+      "process.nextTick>Promise",
+      "setImmediate vs setTimeout",
+      "阶段上下文"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Node.js 如何处理 CPU 密集型任务？",
+    "tags": [
+      "Node.js",
+      "CPU密集",
+      "Worker Threads"
+    ],
+    "reference_answer": "Node主线程单线程CPU密集任务阻塞事件循环。方案按优先级：Worker Threads(共享内存适合计算)、child_process.fork(独立进程IPC通信)、Cluster模式(多进程利用多核)、offload到外部服务(Rust/WASM模块或独立计算服务)。轻量计算用Worker Threads；隔离性要求高用fork；HTTP扩容用Cluster；极致性能用原生扩展。",
+    "key_points": [
+      "Worker Threads",
+      "child_process.fork",
+      "Cluster多进程",
+      "offload外部",
+      "选型原则"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Express/Koa/NestJS 的核心区别是什么？",
+    "tags": [
+      "Node.js",
+      "Express",
+      "Koa",
+      "NestJS"
+    ],
+    "reference_answer": "Express：回调风格中间件线性执行生态最大但架构老旧适合小项目和快速原型。Koa：async/await原生支持洋葱模型中间件更现代轻量适合中型API服务。NestJS：TypeScript优先装饰器+DI+模块化架构类似Spring内置GraphQL/Microservices/WebSocket适合大型企业级应用。小项目Express；中型API Koa；大型团队复杂业务NestJS。",
+    "key_points": [
+      "Express回调+生态",
+      "Koa洋葱模型+async",
+      "NestJS装饰器+DI",
+      "按项目规模选"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Node.js 中如何管理数据库连接池？",
+    "tags": [
+      "Node.js",
+      "数据库",
+      "连接池"
+    ],
+    "reference_answer": "核心原则：复用连接、限制并发、健康检查。配置：min/max连接数根据QPS和DB承载定；idleTimeoutMillis回收空闲连接；connectionTimeoutMillis防获取超时。监控：暴露pool.size/pool.used/pool.pending指标连接池满时告警。Serverless环境连接池无法复用需RDS Proxy或Supavisor等连接池代理。",
+    "key_points": [
+      "复用连接限制并发",
+      "min/max+idle+timeout",
+      "pool指标监控",
+      "Serverless需代理"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Node.js 的 Stream 解决了什么问题？背压是什么？",
+    "tags": [
+      "Node.js",
+      "Stream",
+      "背压"
+    ],
+    "reference_answer": "Stream解决大文件处理的内存问题：数据分块流动不需全部加载到内存。背压(Backpressure)是下游消费速度跟不上上游生产速度时的反馈机制：Writable.write()返回false表示缓冲区满上游应暂停；drain事件触发后恢复。不处理背压导致内存溢出。pipe()自动处理背压手动实现需监听drain。",
+    "key_points": [
+      "分块流动避免全载内存",
+      "背压=下游慢→上游停",
+      "drain事件恢复",
+      "pipe()自动处理"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "Node.js 如何做优雅停机？",
+    "tags": [
+      "Node.js",
+      "优雅停机",
+      "Kubernetes"
+    ],
+    "reference_answer": "流程：捕获SIGTERM/SIGINT→停止接收新请求(server.close)→等待存量请求完成(设超时)→关闭数据库/Redis/MQ连接→退出进程。K8s配合：preStop hook做服务注销和等待；terminationGracePeriodSeconds给足时间；liveness/readiness探针区分存活和就绪。关键：先摘流量再等请求避免等待期间还有新请求进来。",
+    "key_points": [
+      "SIGTERM→停止新请求→等存量→关连接",
+      "K8s preStop+gracefulPeriod",
+      "先摘流量再等",
+      "探针区分存活就绪"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Node.js 中 JWT 和 Session 怎么选？",
+    "tags": [
+      "Node.js",
+      "JWT",
+      "Session",
+      "鉴权"
+    ],
+    "reference_answer": "JWT：无状态服务端不存会话适合微服务和水平扩展。缺点token大/无法主动失效(除非黑名单)/续签复杂。Session：有状态服务端存会话(Redis)token小/可随时销毁。缺点需共享存储/跨域稍麻烦。内部服务/API用JWT；需强会话控制(踢人/实时权限变更)用Session；混合：JWT短期access token+Session/Refresh token长期凭证。",
+    "key_points": [
+      "JWT无状态微服务",
+      "Session有状态强控制",
+      "token大小对比",
+      "主动失效vs被动过期",
+      "混合方案"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "Node.js 如何处理未捕获异常和未处理 Promise rejection？",
+    "tags": [
+      "Node.js",
+      "错误处理",
+      "uncaughtException"
+    ],
+    "reference_answer": "process.on('uncaughtException')捕获同步异常记录日志后必须退出进程(状态已不可信)。process.on('unhandledRejection')捕获未处理的Promise错误同样建议退出。生产实践：PM2/Docker自动重启；接入Sentry上报错误；全局错误边界兜底；永远不要在handler里吞掉错误。",
+    "key_points": [
+      "uncaughtException→退出",
+      "unhandledRejection→退出",
+      "PM2/Docker自动重启",
+      "Sentry上报",
+      "不要吞错误"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Node.js 的 require 缓存机制是什么？如何清除？",
+    "tags": [
+      "Node.js",
+      "require",
+      "缓存"
+    ],
+    "reference_answer": "require首次加载模块后缓存到require.cache后续require直接返回缓存的exports对象不重新执行模块代码。清除缓存：delete require.cache[require.resolve('./module')]下次require重新加载。ESM import不支持缓存清除；热更新工具如nodemon通过重启进程非清缓存实现；生产环境不要动态清缓存可能导致状态不一致。",
+    "key_points": [
+      "require.cache",
+      "delete清缓存",
+      "ESM不支持",
+      "nodemon重启非清缓存",
+      "生产禁动态清"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Node.js 如何实现热重载？和生产环境有什么区别？",
+    "tags": [
+      "Node.js",
+      "热重载",
+      "nodemon"
+    ],
+    "reference_answer": "开发环境：nodemon/ts-node-dev监听文件变化重启进程；Vite/Next.js dev server用HMR只更新变更模块保留状态。生产环境不做热重载。代码变更走CI/CD重新部署用滚动更新/蓝绿部署保证零停机。原因：热重载可能遗漏状态重置引入不一致；生产追求稳定而非开发体验。",
+    "key_points": [
+      "nodemon重启",
+      "HMR更新模块",
+      "生产不用热重载",
+      "滚动更新/蓝绿部署",
+      "稳定>体验"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "CSR、SSR、SSG、ISR 的区别和选型？",
+    "tags": [
+      "SSR",
+      "SSG",
+      "CSR",
+      "ISR",
+      "渲染"
+    ],
+    "reference_answer": "CSR客户端渲染首屏慢SEO差适合后台管理。SSR服务端实时渲染首屏快SEO好但服务器压力大TTFB高适合内容型页面。SSG构建时生成静态HTML最快最便宜但内容更新需重新构建适合博客/文档。ISR(Incremental Static Regeneration)SSG+按需再生成兼顾性能和时效性适合电商/新闻。选型：纯交互CSR；内容为主实时SSR；内容更新低频SSG；内容更新中频ISR。",
+    "key_points": [
+      "CSR后台",
+      "SSR内容实时",
+      "SSG构建静态",
+      "ISR按需再生",
+      "内容更新频率决定"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "SSR 的 Hydration 是什么？有什么性能问题？",
+    "tags": [
+      "SSR",
+      "Hydration",
+      "性能"
+    ],
+    "reference_answer": "Hydration是客户端JS接管服务端渲染HTML绑定事件恢复状态的过程。性能问题：Hydration期间页面不可交互(TTI延迟)；大页面耗时长；重复工作(服务端已渲染客户端又执行组件逻辑)。优化：Selective Hydration(React 18 Suspense分段注水)；Progressive Hydration(优先可视区)；Islands Architecture(只注水交互岛屿)；Resumability(Qwik序列化状态跳过重执行)。",
+    "key_points": [
+      "接管HTML+绑定事件",
+      "TTI延迟",
+      "Selective分段注水",
+      "Islands只注水交互",
+      "Qwik Resumability"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Next.js App Router 和 Pages Router 的核心区别？",
+    "tags": [
+      "Next.js",
+      "App Router",
+      "Pages Router",
+      "RSC"
+    ],
+    "reference_answer": "App Router基于React Server Components默认服务端组件；嵌套布局；流式渲染；Route Handlers替代API Routes；新数据获取方式(async server component)。Pages Router传统客户端组件为主；getServerSideProps/getStaticProps；_app/_document全局配置。新项目用App Router；老项目渐进迁移两者可共存。App Router是未来方向但生态仍在成熟中。",
+    "key_points": [
+      "RSC默认服务端",
+      "嵌套布局+流式渲染",
+      "Route Handlers",
+      "渐进迁移",
+      "App Router是未来"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "SSR 项目中如何处理鉴权和用户状态？",
+    "tags": [
+      "SSR",
+      "鉴权",
+      "用户状态"
+    ],
+    "reference_answer": "服务端：从Cookie/Header提取token在服务端组件或Route Handler中验证无效重定向登录页。客户端：Hydration时把用户信息作为props传给客户端组件或用Context/Store注入。服务端和客户端用户状态必须一致否则Hydration mismatch；敏感数据不传客户端；middleware做路由级鉴权拦截。",
+    "key_points": [
+      "服务端提取token验证",
+      "客户端props/Context注入",
+      "状态一致防mismatch",
+      "敏感数据不传客户端",
+      "middleware拦截"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "SSR 项目的缓存策略怎么设计？",
+    "tags": [
+      "SSR",
+      "缓存",
+      "CDN"
+    ],
+    "reference_answer": "分层缓存：CDN边缘(静态资源+SSG页面)→服务端(SSR结果+数据查询)→客户端(Browser Cache+SWR/React Query)。SSR缓存键：URL+用户身份(个性化内容不能缓存匿名版本)。失效：内容更新主动purge CDN；数据变更invalidate服务端缓存；客户端revalidate后台刷新。缓存粒度越细命中率越低权衡性能和新鲜度。",
+    "key_points": [
+      "CDN→服务端→客户端三层",
+      "缓存键=URL+身份",
+      "主动purge+invalidate",
+      "Stale While Revalidate",
+      "粒度vs命中率"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Islands Architecture 是什么？解决了什么问题？",
+    "tags": [
+      "Islands",
+      "Astro",
+      "架构"
+    ],
+    "reference_answer": "核心思想：页面大部分纯静态HTML只有交互部分(岛屿)在客户端hydrate。解决的问题：传统SSR全量hydration性能瓶颈。非交互区域零JS开销TTI大幅提升。代表框架：Astro/Fresh/Qwik。适用场景：内容为主交互局部的页面(博客带评论/文档带搜索/电商详情页加购物车)。",
+    "key_points": [
+      "静态+交互岛屿",
+      "零JS非交互区",
+      "TTI大幅提升",
+      "Astro/Fresh/Qwik",
+      "内容为主场景"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "流式 SSR（Streaming SSR）的原理和优势？",
+    "tags": [
+      "SSR",
+      "Streaming",
+      "React 18"
+    ],
+    "reference_answer": "原理：服务端分块发送HTML浏览器收到一部分就开始渲染不必等整个页面生成完。React 18 Suspense+renderToPipeableStream实现。优势：TTFB降低(首字节更快)；FCP/LCP提前；高优先级内容先展示低优先级后填充。注意：需HTTP/1.1 chunked encoding或HTTP/2；Suspense boundary划分要合理；客户端需支持流式解析。",
+    "key_points": [
+      "分块发送渐进渲染",
+      "React 18 renderToPipeableStream",
+      "TTFB/FCP提前",
+      "Suspense boundary",
+      "chunked/HTTP2"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "SSR 项目中如何优化第三方库的影响？",
+    "tags": [
+      "SSR",
+      "第三方库",
+      "优化"
+    ],
+    "reference_answer": "问题：很多库只支持浏览器环境SSR时报错或拖慢服务端渲染。策略：dynamic import+ssr:false延迟客户端加载；选择同构库(isomorphic)；服务端用轻量替代方案；条件导入(typeof window!==undefined)。条件导入可能导致bundle包含两份代码tree shaking不一定生效。",
+    "key_points": [
+      "dynamic+ssr:false",
+      "同构库优先",
+      "条件导入",
+      "轻量替代",
+      "tree shaking注意"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "SSG 站点如何处理表单提交和用户交互？",
+    "tags": [
+      "SSG",
+      "表单",
+      "交互"
+    ],
+    "reference_answer": "表单：POST到API Route/Server Action/外部服务(Formspree/Netlify Forms)。交互：局部hydrate交互组件(Islands)；或用纯HTML form+渐进增强。数据提交后重定向到成功页；或用htmx/alpine.js做轻量AJAX无需全量JS。原则：尽量保持静态交互最小化。",
+    "key_points": [
+      "POST API Route",
+      "Islands局部hydrate",
+      "htmx轻量AJAX",
+      "渐进增强",
+      "保持静态"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "如何选择 SSR 框架？Next.js / Nuxt / Remix / Astro 对比。",
+    "tags": [
+      "Next.js",
+      "Nuxt",
+      "Remix",
+      "Astro",
+      "选型"
+    ],
+    "reference_answer": "Next.js：React生态最全App Router+RSC+Vercel深度集成社区最大。Nuxt：Vue生态对标Next.js模块系统强大DX优秀。Remix：Web标准优先loader/action数据模型嵌套路由边缘部署友好。Astro：内容站首选Islands架构框架无关(可用React/Vue/Svelte组件)零JS默认。选型：React选Next/Remix；Vue选Nuxt；内容站选Astro；跟随已有技术栈生态。",
+    "key_points": [
+      "Next.js全栈React",
+      "Nuxt全栈Vue",
+      "Remix Web标准",
+      "Astro内容站",
+      "跟随技术栈"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "GraphQL 和 REST 的核心区别是什么？",
+    "tags": [
+      "GraphQL",
+      "REST",
+      "API设计"
+    ],
+    "reference_answer": "REST资源导向多端点服务端决定返回结构易over-fetching/under-fetching。GraphQL查询语言单一端点客户端声明所需数据精确获取。优势：减少请求次数/强类型schema/自文档化/前后端解耦。劣势：学习曲线陡/缓存复杂(HTTP缓存不适用)/N+1问题/文件上传不便。移动端/复杂UI/多端适配选GraphQL；简单CRUD/公开API选REST。",
+    "key_points": [
+      "多端点vs单端点",
+      "over-fetching vs精确",
+      "强类型schema",
+      "缓存差异",
+      "选型建议"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "GraphQL 的 N+1 问题怎么解决？",
+    "tags": [
+      "GraphQL",
+      "N+1",
+      "DataLoader"
+    ],
+    "reference_answer": "问题：resolver逐条查询关联数据100个用户查头像变101次DB查询。解决方案：DataLoader批量加载+缓存。收集同一tick内所有ID合并为一次批量查询(WHERE id IN (...))结果按ID分发。DataLoader是per-request实例避免跨请求缓存污染；批量查询大小要限制防止SQL过长。",
+    "key_points": [
+      "逐条→批量",
+      "DataLoader合并查询",
+      "per-request实例",
+      "批量大小限制",
+      "同一tick收集"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "GraphQL 如何做缓存？",
+    "tags": [
+      "GraphQL",
+      "缓存",
+      "Apollo"
+    ],
+    "reference_answer": "客户端：Apollo Client/urql的normalized cache按__typename+id归一化存储查询结果自动组装。服务端：CDN缓存GET查询(APQ/Persisted Queries)；字段级缓存(@cacheControl directive)；响应缓存(Redis)。mutation后需手动update cache或refetch；私有数据不能CDN缓存。",
+    "key_points": [
+      "normalized cache",
+      "__typename+id归一化",
+      "Persisted Queries",
+      "@cacheControl",
+      "mutation后refetch"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "GraphQL Schema 设计有哪些最佳实践？",
+    "tags": [
+      "GraphQL",
+      "Schema",
+      "最佳实践"
+    ],
+    "reference_answer": "命名：类型PascalCase字段camelCase枚举UPPER_SNAKE_CASE。分页：Relay Cursor Connections标准(edges/node/pageInfo)优于offset。输入：Input Type单独定义不和Output Type混用。错误：用union/result type表达业务错误而非抛异常。版本：避免v1/v2前缀用字段弃用(@deprecated)平滑演进。面向UI需求设计而非镜像数据库表结构。",
+    "key_points": [
+      "命名规范",
+      "Relay分页标准",
+      "Input/Output分离",
+      "@deprecated演进",
+      "面向UI非镜像DB"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "GraphQL Subscription 的实现原理是什么？",
+    "tags": [
+      "GraphQL",
+      "Subscription",
+      "WebSocket"
+    ],
+    "reference_answer": "基于WebSocket(或SSE)客户端订阅查询服务端数据变更时推送更新。实现：PubSub系统(Redis Pub/Sub/Kafka)解耦发布者和订阅者；resolver返回AsyncIterator。注意：连接管理(心跳/重连)、背压、认证(WS握手时传token)、水平扩展(PubSub广播到所有实例)。低频更新用轮询或SSE可能比WebSocket更简单可靠。",
+    "key_points": [
+      "WebSocket/SSE推送",
+      "PubSub解耦",
+      "AsyncIterator",
+      "心跳+重连",
+      "广播到所有实例"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "tRPC 是什么？和 GraphQL 有什么区别？",
+    "tags": [
+      "tRPC",
+      "GraphQL",
+      "TypeScript"
+    ],
+    "reference_answer": "tRPC是TypeScript端到端类型安全的RPC框架无需schema定义直接共享类型。vs GraphQL：tRPC零代码生成/更简单/TS原生；GraphQL跨语言/生态成熟/查询灵活。全栈TS项目选tRPC；跨语言/多端/复杂查询选GraphQL。",
+    "key_points": [
+      "端到端类型安全",
+      "零schema",
+      "TS原生vs跨语言",
+      "全栈TS选tRPC",
+      "复杂查询选GraphQL"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "REST API 版本管理有哪些策略？",
+    "tags": [
+      "REST",
+      "API",
+      "版本管理"
+    ],
+    "reference_answer": "URL路径(/api/v1/users直观但破坏RESTful语义)。Header(Accept: application/vnd.api.v1+json符合REST但不够直观)。Query参数(?version=1简单但不推荐)。最佳实践：优先向后兼容(新增字段/不删不改)；必须破坏时用URL版本+弃用通知+迁移期。",
+    "key_points": [
+      "URL路径最直观",
+      "优先向后兼容",
+      "弃用通知+迁移期",
+      "不删不改"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "API 限流有哪些算法？怎么选？",
+    "tags": [
+      "API",
+      "限流",
+      "令牌桶",
+      "滑动窗口"
+    ],
+    "reference_answer": "固定窗口(简单但有边界突刺)→滑动窗口(更平滑)→令牌桶(允许突发适合大多数场景)→漏桶(严格匀速适合计费)。通用限流用令牌桶；严格限速用漏桶；简单场景用滑动窗口。分布式用Redis+Lua实现。",
+    "key_points": [
+      "固定窗口边界突刺",
+      "滑动窗口平滑",
+      "令牌桶允许突发",
+      "漏桶严格匀速",
+      "Redis+Lua分布式"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "OpenAPI/Swagger 的价值是什么？如何用好？",
+    "tags": [
+      "OpenAPI",
+      "Swagger",
+      "API文档"
+    ],
+    "reference_answer": "价值：API契约标准化/自动生成文档SDK测试用例/前后端协作基准。用好：Schema First(先写spec再实现)；CI校验spec与代码一致性；版本化管理spec；codegen生成类型和请求函数。spec要和实际实现同步过时的文档比没有文档更有害。",
+    "key_points": [
+      "Schema First",
+      "CI校验一致性",
+      "版本化spec",
+      "codegen生成类型",
+      "spec同步"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "WebSocket 和 SSE 怎么选？",
+    "tags": [
+      "WebSocket",
+      "SSE",
+      "实时通信"
+    ],
+    "reference_answer": "SSE：单向(服务端→客户端)/基于HTTP/自动重连/文本数据/防火墙友好。适合通知/进度/流式AI响应。WebSocket：双向/独立协议/二进制支持/更低延迟。适合聊天/游戏/实时协作。只需服务端推送选SSE；需双向通信选WebSocket。",
+    "key_points": [
+      "SSE单向HTTP自动重连",
+      "WebSocket双向独立协议",
+      "服务端推送→SSE",
+      "双向通信→WebSocket",
+      "流式AI→SSE"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "WebAssembly 解决了什么前端问题？",
+    "tags": [
+      "WebAssembly",
+      "Wasm",
+      "性能"
+    ],
+    "reference_answer": "解决JS性能瓶颈：接近原生的执行速度适合计算密集任务(图像/视频处理/加密/游戏引擎/CAD-3D渲染/科学计算)。不是替代JS而是补充：DOM操作仍用JS，Wasm负责重计算通过内存共享通信。Wasm启动有编译开销不适合短任务；包体积较大需按需加载。",
+    "key_points": [
+      "接近原生速度",
+      "计算密集(图像/加密/3D)",
+      "补充JS非替代",
+      "编译开销",
+      "按需加载"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Wasm 和 JS 如何交互？性能瓶颈在哪？",
+    "tags": [
+      "WebAssembly",
+      "JS",
+      "交互"
+    ],
+    "reference_answer": "通过import/export函数调用；共享ArrayBuffer/SharedArrayBuffer传递大数据。瓶颈：跨边界调用有开销(类型转换/上下文切换)频繁小调用反而慢。优化：批量操作/减少跨界次数/SharedArrayBuffer零拷贝/循环逻辑放Wasm内部。",
+    "key_points": [
+      "import/export函数",
+      "SharedArrayBuffer零拷贝",
+      "跨界开销",
+      "批量操作",
+      "循环放Wasm内部"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "PWA 的核心能力是什么？适用场景？",
+    "tags": [
+      "PWA",
+      "Service Worker",
+      "离线"
+    ],
+    "reference_answer": "核心：Service Worker(离线/缓存)/Web App Manifest(安装到桌面)/Push Notification(推送)。适用：内容型应用(新闻/文档)/工具类(计算器)/弱网环境/需要类原生体验的Web应用。不适用：强依赖后端实时数据/需硬件API(蓝牙NFC受限于iOS)/iOS Safari支持不完整。",
+    "key_points": [
+      "SW离线缓存",
+      "Manifest安装桌面",
+      "Push推送",
+      "弱网+内容型",
+      "iOS限制"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Service Worker 的缓存策略有哪些？",
+    "tags": [
+      "Service Worker",
+      "缓存策略",
+      "PWA"
+    ],
+    "reference_answer": "Cache First(优先缓存失败走网络适合静态资源)；Network First(优先网络失败走缓存适合API)；Stale While Revalidate(立即返回缓存后台更新平衡速度和新鲜度)；Cache Only/Network Only(极端场景)。选择依据：资源更新频率/离线需求/用户体验优先级。",
+    "key_points": [
+      "Cache First静态",
+      "Network First API",
+      "Stale While Revalidate",
+      "更新频率决定",
+      "离线需求"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "PWA 在 iOS Safari 上有哪些限制？",
+    "tags": [
+      "PWA",
+      "iOS",
+      "Safari"
+    ],
+    "reference_answer": "不支持Push Notification(iOS 16.4+支持但需添加到主屏幕)；Service Worker生命周期受限(后台易被杀)；不支持beforeinstallprompt；存储上限1GB；不支持Web Bluetooth/NFC。应对：功能降级/提示用户添加到主屏幕/测试真机行为。",
+    "key_points": [
+      "Push受限(16.4+)",
+      "SW后台易被杀",
+      "无beforeinstallprompt",
+      "1GB存储上限",
+      "真机测试"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Wasm 的 ESM 集成现状如何？",
+    "tags": [
+      "WebAssembly",
+      "ESM",
+      "提案"
+    ],
+    "reference_answer": "现状：提案阶段尚未标准化。目前需bundler插件(Vite/Rollup/Webpack)处理.wasm文件导入。趋势：import wasmModule from './module.wasm'将成为标准简化加载和实例化。当前实践用vite-plugin-wasm+top-level await或async init函数。",
+    "key_points": [
+      "提案未标准化",
+      "bundler插件处理",
+      "vite-plugin-wasm",
+      "top-level await",
+      "趋势=标准import"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "PWA 的更新机制是怎样的？",
+    "tags": [
+      "PWA",
+      "Service Worker",
+      "更新"
+    ],
+    "reference_answer": "SW更新：浏览器定期检查sw.js是否变化(字节级比较)；新SW进入waiting状态；调用skipWaiting()立即激活；clients.claim()接管所有页面。用户体验：提示用户有新版本确认后刷新；或后台静默更新下次访问生效。缓存清单也要版本化避免旧SW缓存新资源。",
+    "key_points": [
+      "字节级比较sw.js",
+      "waiting→skipWaiting→claim",
+      "提示或静默更新",
+      "缓存清单版本化"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Wasm GC 提案的意义是什么？",
+    "tags": [
+      "WebAssembly",
+      "GC",
+      "提案"
+    ],
+    "reference_answer": "现状：Wasm只有线性内存高级语言(Go/C#/Kotlin)需自带GC运行时包体积大。Wasm GC：让Wasm原生支持垃圾回收对象语言可直接映射到Wasm类型无需捆绑GC。意义：大幅减小Wasm包体积/提升互操作性/吸引更多语言生态。状态：Chrome/Firefox已支持Safari跟进中。",
+    "key_points": [
+      "原生GC对象",
+      "无需捆绑GC运行时",
+      "减小包体积",
+      "Chrome/Firefox支持",
+      "更多语言生态"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "如何调试 Wasm 代码？",
+    "tags": [
+      "WebAssembly",
+      "调试",
+      "DevTools"
+    ],
+    "reference_answer": "Chrome DevTools：Sources面板查看Wasm反汇编；支持source map映射到原始源码(C/Rust)；Memory面板检查线性内存。Console需通过import从JS侧提供。专用工具：wasm-dis(反汇编)/wasm-opt(优化分析)。难点：缺乏断点和变量查看主要靠日志和内存检查。",
+    "key_points": [
+      "Sources反汇编",
+      "source map映射",
+      "Memory面板",
+      "wasm-dis/wasm-opt",
+      "日志+内存为主"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "PWA 和原生 App 的体验差距在哪？",
+    "tags": [
+      "PWA",
+      "原生App",
+      "体验"
+    ],
+    "reference_answer": "差距：启动动画/过渡受限；后台运行受限；硬件API不全；推送可靠性低(尤其iOS)；无法上架部分应用商店；手势/动画流畅度略逊。优势：免安装/跨平台/更新即时/开发成本低/SEO友好。决策：核心体验要求高选原生；覆盖广迭代快选PWA；混合方案(Capacitor/Tauri)折中。",
+    "key_points": [
+      "启动+手势差距",
+      "硬件API不全",
+      "iOS推送限制",
+      "免安装跨平台",
+      "Capacitor折中"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "WCAG 的核心原则是什么？前端如何落地？",
+    "tags": [
+      "无障碍",
+      "WCAG",
+      "a11y"
+    ],
+    "reference_answer": "四原则：可感知(Perceivable)/可操作(Operable)/可理解(Understandable)/健壮(Robust)。落地：语义化HTML；alt文本；键盘可访问；颜色对比度>=4.5:1；焦点可见；ARIA补语义；表单label关联；媒体字幕。工具：axe-core自动化检测/Lighthouse Accessibility审计/屏幕阅读器实测(NVDA/VoiceOver)。",
+    "key_points": [
+      "POUR四原则",
+      "语义化HTML",
+      "键盘可访问",
+      "对比度4.5:1",
+      "axe-core+Lighthouse"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "ARIA 的作用和使用原则是什么？",
+    "tags": [
+      "ARIA",
+      "无障碍",
+      "a11y"
+    ],
+    "reference_answer": "作用：当原生HTML语义不足时补充无障碍信息(角色/状态/属性)。原则：第一规则是能用原生HTML就不用ARIA；不要改变原生语义；所有交互元素必须键盘可操作；aria-hidden=true的元素不应接收焦点；动态内容用aria-live通知。常见误用：div+role=button不如直接用button；滥用aria-label掩盖语义缺失。",
+    "key_points": [
+      "补充语义不足",
+      "优先原生HTML",
+      "键盘可操作",
+      "aria-live动态通知",
+      "div+role=button是反模式"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "前端国际化的关键技术点有哪些？",
+    "tags": [
+      "国际化",
+      "i18n",
+      "RTL"
+    ],
+    "reference_answer": "文本提取：ICU MessageFormat支持复数/性别/变量插值。RTL支持：CSS logical properties(margin-inline-start)代替方向属性；dir属性；镜像布局。日期/数字/货币：Intl API格式化。字体：多语言字体回退链；CJK字体体积优化(font-subsetting)。测试：伪本地化(pseudo-localization)提前发现硬编码文本和布局溢出。",
+    "key_points": [
+      "ICU MessageFormat",
+      "CSS logical properties",
+      "Intl API",
+      "CJK字体优化",
+      "伪本地化测试"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "如何防范点击劫持（Clickjacking）？",
+    "tags": [
+      "安全",
+      "Clickjacking",
+      "防护"
+    ],
+    "reference_answer": "防御：X-Frame-Options:DENY/SAMEORIGIN；CSP frame-ancestors'self'/'none'。前端辅助检测window.top!==window.self时隐藏敏感操作或显示警告。iframe sandbox不能替代上述头；旧浏览器兼容考虑X-Frame-Options。",
+    "key_points": [
+      "X-Frame-Options",
+      "CSP frame-ancestors",
+      "window.top检测",
+      "sandbox不替代"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "question_type": "knowledge",
+    "content": "Subresource Integrity（SRI）是什么？怎么用？",
+    "tags": [
+      "SRI",
+      "安全",
+      "CDN"
+    ],
+    "reference_answer": "SRI验证外部资源完整性防止CDN被篡改注入恶意代码。用法：script/link标签加integrity属性值为sha384-xxx。生成：openssl dgst -sha384 -binary file.js|openssl base64 -A。资源更新必须同步更新hash；crossorigin=anonymous必需；仅适用于不可变资源(带hash文件名)。",
+    "key_points": [
+      "integrity属性",
+      "sha384-hash",
+      "资源更新同步改hash",
+      "crossorigin必需",
+      "仅不可变资源"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "前端如何处理敏感数据（token、密钥）？",
+    "tags": [
+      "安全",
+      "token",
+      "密钥"
+    ],
+    "reference_answer": "原则：前端永远不安全敏感数据不应存在于前端代码中。Token：HttpOnly Cookie存储JS不可读；或内存中持有刷新丢失。API Key：后端代理转发前端不直连第三方；或用短期临时凭证(STS)。环境变量：构建时注入的不是秘密只是配置；真正的secret只在服务端。禁止：localStorage存token/代码硬编码密钥/Git提交.env。",
+    "key_points": [
+      "HttpOnly Cookie",
+      "后端代理转发",
+      "短期凭证STS",
+      "构建时变量非秘密",
+      "禁localStorage存token"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Content Security Policy 的 nonce 和 hash 怎么选？",
+    "tags": [
+      "CSP",
+      "nonce",
+      "hash",
+      "安全"
+    ],
+    "reference_answer": "Nonce：每次请求生成随机值内联脚本带相同nonce。适合动态内容/SSR。Hash：对脚本内容计算哈希CSP中列出。适合静态不变的内联脚本。选择：SSR/动态页面用nonce；纯静态站点用hash；两者可共存。nonce必须密码学安全随机；hash对空格/换行敏感；unsafe-inline应尽量避免。",
+    "key_points": [
+      "nonce每次随机",
+      "hash静态计算",
+      "SSR→nonce",
+      "hash空格敏感",
+      "避免unsafe-inline"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "如何检测和修复内存泄漏？",
+    "tags": [
+      "内存泄漏",
+      "DevTools",
+      "性能"
+    ],
+    "reference_answer": "检测：Chrome DevTools Memory面板；Heap Snapshot对比(分配前后)；Allocation Timeline定位分配热点；Performance Monitor观察JS Heap Size趋势。常见泄漏：未清理的事件监听器/定时器；闭包持有大对象；DOM引用被JS持有；全局变量累积。修复：WeakRef/WeakMap替代强引用；组件卸载cleanup；避免不必要闭包；定期审查长生命周期对象。",
+    "key_points": [
+      "Heap Snapshot对比",
+      "Allocation Timeline",
+      "事件监听器/定时器清理",
+      "WeakRef替代",
+      "组件卸载cleanup"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "前端性能预算（Performance Budget）怎么定？",
+    "tags": [
+      "性能预算",
+      "Lighthouse",
+      "CI"
+    ],
+    "reference_answer": "指标：LCP<2.5s/INP<200ms/CLS<0.1/JS Bundle<300KB gzip/图片<200KB。制定：参考竞品和行业基准；结合业务目标(转化率vs性能)；分页面类型差异化。执行：CI中用Lighthouse CI/bundlesize自动检查；超标阻断合并；定期复盘调整。预算是团队共识不是个人偏好；持续监控比一次性优化更重要。",
+    "key_points": [
+      "LCP/INP/CLS/bundle/图片",
+      "参考竞品基线",
+      "CI自动检查",
+      "超标阻断合并",
+      "持续监控"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "如何设计一个可扩展的前端架构？",
+    "tags": [
+      "前端架构",
+      "可扩展",
+      "分层"
+    ],
+    "reference_answer": "核心原则：关注点分离/低耦合高内聚/约定优于配置。分层：UI层(组件)/业务层(hooks/stores)/数据层(API/cache)/基础设施层(路由/auth/i18n)。模块化：Feature-based目录结构；共享UI库独立；业务模块自治。技术选型：状态管理按规模选；样式方案统一；类型系统全覆盖。演进：架构服务于业务不过度设计；预留扩展点但不提前实现；定期重构偿还技术债。",
+    "key_points": [
+      "四层架构",
+      "Feature-based目录",
+      "模块自治",
+      "预留扩展不提前",
+      "定期重构"
+    ]
   }
 ]
