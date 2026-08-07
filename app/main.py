@@ -146,21 +146,46 @@ def create_app() -> FastAPI:
                 resume_items = list(_store.get("resumes", {}).values())
                 iq_items = list(_store.get("interview_questions", {}).values())
 
-                # 向量搜索
+                # 向量搜索 — 基于关键词做模拟评分
                 if "question_bank" in sql.lower():
+                    # 从检索 query 中提取关键词
+                    query_keywords = set()
+                    if params:
+                        cat = params.get("category", "")
+                        diff = params.get("difficulty", "")
+                        qtype = params.get("question_type", "")
+                        query_keywords = {k.lower() for k in [cat, diff, qtype] if k}
                     rows = []
                     for item in qb_items:
+                        tags = [t.lower() for t in (getattr(item, 'tags', []) or [])]
+                        category = (getattr(item, 'category', '') or '').lower()
+                        item_qtype = (getattr(item, 'question_type', '') or '').lower()
+                        difficulty = (getattr(item, 'difficulty', '') or '').lower()
+                        content = (getattr(item, 'content', '') or '').lower()
+
+                        # 关键词匹配越多相似度越高
+                        score = 0.05  # 基础分很低
+                        key_terms = {category, item_qtype, difficulty}
+                        for kw in query_keywords:
+                            if kw in key_terms:
+                                score += 0.25
+                            if any(kw in t for t in tags):
+                                score += 0.08
+                            if kw in content:
+                                score += 0.02
+                        score = min(score, 0.95)
+
                         row = MagicMock()
-                        row.id = item.id
-                        row.content = item.content
-                        row.similarity = 0.5
-                        row.category = getattr(item, 'category', '')
-                        row.difficulty = getattr(item, 'difficulty', '')
-                        row.question_type = getattr(item, 'question_type', '')
-                        row.tags = getattr(item, 'tags', [])
-                        row.reference_answer = getattr(item, 'reference_answer', None)
+                        row.id = item.id; row.content = item.content; row.similarity = round(score, 4)
+                        row.category = category; row.difficulty = difficulty; row.question_type = item_qtype
+                        row.tags = tags; row.reference_answer = getattr(item, 'reference_answer', None)
                         row.key_points = getattr(item, 'key_points', [])
                         rows.append(row)
+
+                    # 按相似度降序排列，取 top_k
+                    top_k = params.get("top_k", 5) if params else 5
+                    rows.sort(key=lambda r: r.similarity, reverse=True)
+                    rows = rows[:top_k]
                     return _make_mock_result(rows, scalar_val=len(rows))
 
                 # Query-specific tables
