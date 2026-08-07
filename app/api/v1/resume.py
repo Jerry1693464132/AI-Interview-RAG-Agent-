@@ -17,10 +17,10 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Query, UploadFile
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db
+from app.core.deps import get_db
 from app.core.config import get_settings
 from app.core.exceptions import NotFoundError
 from app.core.llm_client import get_llm_client
@@ -51,9 +51,6 @@ async def list_resumes(
     stmt = select(Resume).order_by(Resume.created_at.desc())
     if status:
         stmt = stmt.where(Resume.status == status)
-    count_stmt = select(func.count()).select_from(Resume)
-    if status:
-        count_stmt = count_stmt.where(Resume.status == status)
     stmt = stmt.offset(offset).limit(limit)
     result = await db.execute(stmt)
     return APIResponse(data=[ResumeListResponse(id=r.id, original_filename=r.original_filename, status=r.status, created_at=r.created_at) for r in result.scalars().all()])
@@ -174,10 +171,13 @@ async def get_resume_profile(resume_id: UUID, db: AsyncSession = Depends(get_db)
         raise NotFoundError("CandidateProfile", resume_id)
     p = resume.profile
     return APIResponse(data=ProfileResponse(
-        id=p.id, name=p.name, skills=p.skills or [], skill_levels=p.skill_levels or {},
-        years_of_experience=p.years_of_experience, target_role=p.target_role,
-        target_level=p.target_level, education_summary=p.education_summary,
-        work_summary=p.work_summary,
+        id=p.id, name=p.name,
+        core_skills=[{"skill": s, "level": p.skill_levels.get(s, "intermediate"), "years": 0, "evidence": ""} for s in (p.skills or [])],
+        strengths=[], risk_areas=[],
+        analysis_summary=f"候选人 {p.name or '未知'}，目标{p.target_role or '未知'}，{p.years_of_experience or 0}年经验",
+        interview_strategy="",
+        target_role=p.target_role or "", target_level=p.target_level or "",
+        education_summary=p.education_summary, work_summary=p.work_summary,
     ))
 
 

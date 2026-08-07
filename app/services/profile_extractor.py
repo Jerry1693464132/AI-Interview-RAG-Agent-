@@ -9,12 +9,12 @@
 """
 
 import json
-import re
 from typing import Optional
 
 import structlog
 
 from app.core.llm_client import LLMClient
+from app.prompts import clean_json_response
 
 logger = structlog.get_logger(__name__)
 
@@ -83,11 +83,8 @@ class ProfileExtractor:
         )
 
         content = response.choices[0].message.content or "{}"
-        content = re.sub(r"^```(?:json)?\s*", "", content.strip())
-        content = re.sub(r"\s*```$", "", content.strip())
-
         try:
-            return json.loads(content)
+            return json.loads(clean_json_response(content))
         except json.JSONDecodeError:
             logger.error("analysis_json_parse_failed")
             return {}

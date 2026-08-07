@@ -144,10 +144,7 @@ def create_app() -> FastAPI:
                 qb_items = list(_store.get("question_bank", {}).values())
                 interview_items = list(_store.get("interview_sessions", {}).values())
                 resume_items = list(_store.get("resumes", {}).values())
-                report_items = list(_store.get("reports", {}).values())
                 iq_items = list(_store.get("interview_questions", {}).values())
-                answer_items = list(_store.get("answers", {}).values())
-                score_items = list(_store.get("scores", {}).values())
 
                 # 向量搜索
                 if "question_bank" in sql.lower():
@@ -173,14 +170,8 @@ def create_app() -> FastAPI:
                     return _make_mock_result(interview_items, scalar_val=len(interview_items))
                 if "resumes" in sql.lower():
                     return _make_mock_result(resume_items, scalar_val=len(resume_items))
-                if "reports" in sql.lower():
-                    return _make_mock_result(report_items, scalar_val=len(report_items))
-                if "answers" in sql.lower():
-                    return _make_mock_result(answer_items, scalar_val=len(answer_items))
-                if "scores" in sql.lower():
-                    return _make_mock_result(score_items, scalar_val=len(score_items))
 
-                all_rows = qb_items + interview_items + resume_items + report_items + iq_items + answer_items + score_items
+                all_rows = qb_items + interview_items + resume_items + iq_items
                 return _make_mock_result(all_rows, scalar_val=len(all_rows))
 
             async def _mock_get(model_cls, obj_id):

@@ -14,7 +14,6 @@ redis[hiredis]==5.2.1
 
 # Celery
 celery[redis]==5.4.0
-flower==2.0.1
 
 # LLM & AI
 httpx==0.28.1

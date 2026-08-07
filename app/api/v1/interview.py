@@ -16,7 +16,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db
+from app.core.deps import get_db
 from app.core.exceptions import NotFoundError
 from app.core.llm_client import get_llm_client
 from app.models.interview import InterviewSession, InterviewStatus

@@ -16,7 +16,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db
+from app.core.deps import get_db
 from app.core.exceptions import NotFoundError
 from app.models.question import QuestionBank
 from app.rag.embeddings import get_embedding_client

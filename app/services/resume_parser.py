@@ -8,14 +8,13 @@
 """
 
 import json
-import re
 from pathlib import Path
 from typing import Optional
 
 import structlog
 
 from app.core.llm_client import LLMClient
-from app.prompts import PromptLoader, get_prompt_loader
+from app.prompts import clean_json_response
 
 logger = structlog.get_logger(__name__)
 
@@ -32,13 +31,8 @@ class ResumeParser:
     # 支持的文件类型
     SUPPORTED_TYPES = {".pdf", ".docx", ".txt", ".md"}
 
-    def __init__(
-        self,
-        llm_client: LLMClient,
-        prompt_loader: Optional[PromptLoader] = None,
-    ) -> None:
+    def __init__(self, llm_client: LLMClient) -> None:
         self.llm = llm_client
-        self.prompts = prompt_loader or get_prompt_loader()
 
     async def parse(self, file_path: str) -> dict:
         """
@@ -161,12 +155,7 @@ class ResumeParser:
         )
 
         content = response.choices[0].message.content or "{}"
-
-        # 清理 markdown 代码块标记
-        content = re.sub(r"^```(?:json)?\s*", "", content.strip())
-        content = re.sub(r"\s*```$", "", content.strip())
-
-        return json.loads(content)
+        return json.loads(clean_json_response(content))
 
     def _system_prompt(self) -> str:
         return """你是一位专业的简历解析专家。请将简历文本解析为以下 JSON 结构。

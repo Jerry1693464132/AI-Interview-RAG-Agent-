@@ -9,7 +9,6 @@
 """
 
 import json
-import re
 from typing import Optional
 
 import structlog
@@ -17,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.llm_client import LLMClient
 from app.models.question import InterviewQuestion
-from app.prompts import PromptLoader, get_prompt_loader
+from app.prompts import clean_json_response
 from app.rag.retriever import HybridRetriever
 
 logger = structlog.get_logger(__name__)
@@ -43,15 +42,9 @@ class QuestionGenerator:
         "soft_skill": 0.15, # 软技能：沟通、协作、学习
     }
 
-    def __init__(
-        self,
-        llm_client: LLMClient,
-        retriever: HybridRetriever,
-        prompt_loader: Optional[PromptLoader] = None,
-    ) -> None:
+    def __init__(self, llm_client: LLMClient, retriever: HybridRetriever) -> None:
         self.llm = llm_client
         self.retriever = retriever
-        self.prompts = prompt_loader or get_prompt_loader()
 
     async def generate(
         self,
@@ -205,10 +198,7 @@ class QuestionGenerator:
         )
 
         content = response.choices[0].message.content or "{}"
-        content = re.sub(r"^```(?:json)?\s*", "", content.strip())
-        content = re.sub(r"\s*```$", "", content.strip())
-
-        result = json.loads(content)
+        result = json.loads(clean_json_response(content))
         return result.get("questions", [])
 
     def _generation_system_prompt(self) -> str:
