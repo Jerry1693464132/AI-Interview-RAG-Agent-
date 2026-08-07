@@ -78,7 +78,7 @@ class ProfileExtractor:
                 {"role": "system", "content": _ANALYSIS_SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
             ],
-            temperature=0.3,
+            temperature=0.1,  # 低温度保证分析稳定性
             response_format={"type": "json_object"},
         )
 
@@ -113,15 +113,21 @@ class ProfileExtractor:
             major = ed.get("major", ed.get("专业", ""))
             edu_lines.append(f"- {school}, {degree}, {major}")
 
+        # 个人概述（简历中可能包含求职意向）
+        personal = data.get("personal_info", {})
+        objective = personal.get("objective", personal.get("summary", personal.get("求职意向", "")))
+
         return (
-            f"## 候选人技能\n{', '.join(skills) if skills else '未提取到'}\n\n"
-            f"## 工作经历\n" + "\n".join(exp_lines) + "\n\n"
+            (f"## 求职意向\n{objective}\n\n" if objective else "")
+            + f"## 候选人技能\n{', '.join(skills) if skills else '未提取到'}\n\n"
+            + f"## 工作经历\n" + "\n".join(exp_lines) + "\n\n"
             + (f"## 项目经验\n" + "\n".join(
                 f"- {p.get('name', p.get('项目名', ''))}: {p.get('description', p.get('描述', ''))}"[:200]
                 for p in projects
             ) + "\n\n" if projects else "")
             + (f"## 教育背景\n" + "\n".join(edu_lines) + "\n\n" if edu_lines else "")
             + "请基于以上信息进行深度分析。"
+            + (f"\n\n注意：如果上述求职意向已明确，target_role 应直接使用该意向，不要自行推断。" if objective else "")
         )
 
     @staticmethod

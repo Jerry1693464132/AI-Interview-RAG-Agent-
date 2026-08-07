@@ -164,7 +164,7 @@ IMPORTANT: 所有 JSON key 必须使用英文，value 中的文本内容可以�
 
 返回格式（严格遵循）：
 {
-  "personal_info": {"name": "", "email": "", "phone": "", "location": "", "website": ""},
+  "personal_info": {"name": "", "email": "", "phone": "", "location": "", "website": "", "objective": "求职意向或自我描述"},
   "education": [{"school": "学校名", "degree": "本科/硕士/博士", "major": "专业", "start_year": "2016", "end_year": "2020"}],
   "experience": [{"company": "公司", "title": "职位", "start_date": "2020.06", "end_date": "2023.06", "description": "工作描述", "skills_used": ["Python"]}],
   "projects": [{"name": "项目名", "description": "描述", "tech_stack": ["技术"]}],
