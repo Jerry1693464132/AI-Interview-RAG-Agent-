@@ -159,8 +159,8 @@ _ANALYSIS_SYSTEM_PROMPT = """你是一位资深技术面试官和招聘顾问，
 {
   "skills": ["技能列表"],
   "core_skills": [
-    {"skill": "Python", "level": "expert", "years": 6, "evidence": "6年Python后端开发，主导过高并发系统设计"},
-    {"skill": "Go", "level": "advanced", "years": 3, "evidence": "参与过性能优化项目"}
+    {"skill": "Python", "level": "expert", "proficiency": "精通", "evidence": "主导过高并发系统设计，有深度优化经验"},
+    {"skill": "Go", "level": "advanced", "proficiency": "熟练", "evidence": "参与过性能优化项目，能独立开发"}
   ],
   "strengths": [
     "高并发系统架构设计经验丰富",
@@ -177,10 +177,12 @@ _ANALYSIS_SYSTEM_PROMPT = """你是一位资深技术面试官和招聘顾问，
 }
 
 ## 技能等级标准
-- expert: 能主导架构设计，有深度优化经验，是该领域的 go-to person
-- advanced: 深入理解原理，能独立技术选型和方案设计
-- intermediate: 能独立完成日常开发任务
-- novice: 了解基础概念，需要指导
+- expert + proficiency="精通": 能主导架构设计，有深度优化经验，是该领域的 go-to person
+- advanced + proficiency="熟练": 深入理解原理，能独立技术选型和方案设计
+- intermediate + proficiency="掌握": 能独立完成日常开发任务
+- novice + proficiency="了解": 了解基础概念，需要指导
+
+注意：proficiency 用中文模糊表述（精通/熟练/掌握/了解），不要写具体年数。evidence 引用简历中的具体项目或经历作为证据。
 
 ## 分析要求
 - 每个评估必须有证据支撑（引用简历中的具体内容）

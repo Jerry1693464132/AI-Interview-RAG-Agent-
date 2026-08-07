@@ -180,7 +180,7 @@ async function handleFile(file){
       const levelClass={'expert':'tag-expert','advanced':'tag-advanced','intermediate':'tag-mid','novice':'tag-novice'};
       const coreSkills=(p.core_skills||[]);
       const skillsHtml=coreSkills.length>0
-        ? coreSkills.map(s=>`<span class="tag ${levelClass[s.level]||'tag-novice'}">${s.skill} (${s.level}, ${s.years||'?'}年)</span>`).join(' ')
+        ? coreSkills.map(s=>`<span class="tag ${levelClass[s.level]||'tag-novice'}">${s.skill} (${s.proficiency||s.level||'?'})</span>`).join(' ')
         : (p.skills||[]).map(s=>`<span class="tag tag-skill">${s}</span>`).join(' ') || '<span class="text-muted">未识别</span>';
 
       // 院校信息
