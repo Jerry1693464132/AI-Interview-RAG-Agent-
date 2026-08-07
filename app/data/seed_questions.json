@@ -475,5 +475,954 @@
       "适用场景判断",
       "RAG+微调结合"
     ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "你的 RAG 系统上线后，用户反馈\"答非所问\"，你怎么系统性排查？",
+    "tags": [
+      "RAG",
+      "故障排查",
+      "检索质量"
+    ],
+    "reference_answer": "按链路逐段排查：先复现→检索端查query改写/Embedding一致性/chunk切分→生成端查上下文长度/lost in the middle/温度→建立归因日志记录完整链路。",
+    "key_points": [
+      "检索vs生成分步定位",
+      "query改写检查",
+      "Embedding一致性",
+      "chunk切分质量",
+      "归因日志"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Embedding 模型怎么选？你评估 Embedding 质量的标准是什么？",
+    "tags": [
+      "Embedding",
+      "模型选型",
+      "评估"
+    ],
+    "reference_answer": "选型看效果、性能、适配性三个维度。用MTEB做初筛，最终在自有数据上测Recall@K和MRR。性能关注维度和QPS。中文场景优先中文模型。选2-3个候选用同一评测集对比。",
+    "key_points": [
+      "MTEB/C-MTEB评估",
+      "自有数据评测",
+      "Recall@K与MRR",
+      "维度vs存储成本",
+      "对比实验驱动"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "向量数据库和传统数据库做全文检索有什么本质区别？各自适合什么场景？",
+    "tags": [
+      "向量数据库",
+      "全文检索",
+      "混合检索"
+    ],
+    "reference_answer": "全文检索是关键词精确匹配加倒排索引，向量检索是语义相似度匹配。全文适合精确查找，向量适合模糊语义匹配。最佳实践：混合检索，BM25精确+向量语义，RRF合并后Rerank精排。",
+    "key_points": [
+      "全文vs语义对比",
+      "BM25+向量混合检索",
+      "RRF融合",
+      "Rerank精排"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "Prompt Engineering 在你的项目里是怎么管理的？怎么避免 prompt 越改越乱？",
+    "tags": [
+      "Prompt",
+      "工程化",
+      "版本管理"
+    ],
+    "reference_answer": "prompt就是代码：版本控制(git)、模板化参数化(拆槽位变量注入)、评测驱动(每次改动跑评测集看指标)、A/B测试(流量分桶)、文档化(写清楚用途和局限)。",
+    "key_points": [
+      "prompt版本管理",
+      "模板化+参数化",
+      "评测驱动迭代",
+      "A/B测试"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Function Calling 和 ReAct 模式有什么区别？各自适合什么场景？",
+    "tags": [
+      "Function Calling",
+      "ReAct",
+      "Agent"
+    ],
+    "reference_answer": "Function Calling是单轮结构化工具调用，延迟低适合简单场景。ReAct是多步推理循环(Thought→Action→Observation)，适合链式探索性任务。实际工程中两者结合：ReAct编排流程，每步工具调用走Function Calling。",
+    "key_points": [
+      "Function Calling单轮vs ReAct多步",
+      "结构化vs推理循环",
+      "链式任务适用场景",
+      "两者结合的实践"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "你的 Agent 需要访问外部 API，但外部 API 不稳定、经常超时，你怎么设计容错？",
+    "tags": [
+      "Agent",
+      "容错",
+      "Circuit Breaker"
+    ],
+    "reference_answer": "分层防御：超时控制→重试+指数退避→Circuit Breaker熔断→降级兜底(返回缓存/默认值)→异步化非关键调用→可观测(记录耗时状态码)。",
+    "key_points": [
+      "超时控制",
+      "指数退避重试",
+      "Circuit Breaker熔断",
+      "降级兜底",
+      "可观测性"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "如何设计一个 Agent 的权限控制系统？怎么防止 Agent 越权操作？",
+    "tags": [
+      "Agent",
+      "权限控制",
+      "安全"
+    ],
+    "reference_answer": "四层设计：工具级白名单、参数级校验、Human-in-the-loop(高风险操作人工确认)、审计日志(who/what/when/result)。底层原则是最小权限。",
+    "key_points": [
+      "工具级白名单",
+      "参数级校验",
+      "Human-in-the-loop",
+      "审计日志",
+      "最小权限原则"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "大模型幻觉在你的业务场景里怎么缓解？能完全消除吗？",
+    "tags": [
+      "幻觉",
+      "RAG",
+      "安全"
+    ],
+    "reference_answer": "不能完全消除但可缓解。分层策略：源头减少(RAG+低温)、输出校验(Schema验证)、置信度标注(低置信度转人工)、高风险场景人工兜底、持续监控(LLM-as-a-Judge检测幻觉率)。本质是检测+兜底+控制影响范围。",
+    "key_points": [
+      "RAG减少幻觉",
+      "输出校验",
+      "置信度标注",
+      "LLM-as-a-Judge检测",
+      "不能消除只能控制"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "你怎么做 Prompt 注入攻击的防护？",
+    "tags": [
+      "安全",
+      "Prompt注入",
+      "防护"
+    ],
+    "reference_answer": "多层防护：输入过滤(检测注入模式)、Prompt结构加固(分隔符包裹用户输入+声明不作为指令)、输出过滤(检查泄露)、权限隔离(最小权限兜底)、持续对抗(收集注入案例迭代规则)。",
+    "key_points": [
+      "输入过滤检测注入",
+      "Prompt结构加固",
+      "分隔符包裹用户输入",
+      "最小权限兜底",
+      "持续对抗迭代"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "你的 Agent 需要处理用户上传的文件（PDF、Word、图片），你怎么设计这个流程？",
+    "tags": [
+      "文件处理",
+      "RAG",
+      "异步"
+    ],
+    "reference_answer": "四步：解析(PyMuPDF/pdfplumber/python-docx/OCR)→质量检测(乱码/扫描件)→切分+Embedding+元数据→异步处理(上传后立即返回处理中)。安全：类型白名单+大小限制+病毒扫描。",
+    "key_points": [
+      "多格式解析",
+      "质量检测",
+      "语义切分+元数据",
+      "异步处理",
+      "安全校验"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "如何设计一个支持多租户的 Agent 平台？",
+    "tags": [
+      "多租户",
+      "架构",
+      "Agent平台"
+    ],
+    "reference_answer": "五维度：数据隔离(tenant_id namespace)、配置隔离(各自prompt/工具/模型)、资源配额(token/QPS/并发限制)、权限分层(管理员/开发者/用户)、可观测性(按租户统计用量延迟错误率)。轻量用逻辑隔离，高安全用物理隔离。",
+    "key_points": [
+      "数据隔离(namespace)",
+      "配置隔离",
+      "资源配额",
+      "权限分层",
+      "逻辑隔离vs物理隔离"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "Streaming 输出在你的 Agent 里是怎么实现的？遇到工具调用时流式怎么处理？",
+    "tags": [
+      "SSE",
+      "流式输出",
+      "Agent"
+    ],
+    "reference_answer": "SSE/WebSocket逐token推送。遇到工具调用暂停流式，显示loading，工具执行完恢复。ReAct思考过程可选择性展示。断线重连做断点续传。超时兜底。",
+    "key_points": [
+      "SSE/WebSocket",
+      "工具调用时暂停流式",
+      "思考过程展示",
+      "断线重连",
+      "超时兜底"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "你怎么做 Agent 的 A/B 测试？",
+    "tags": [
+      "A/B测试",
+      "Agent",
+      "评测"
+    ],
+    "reference_answer": "实验设计(哈希分桶)→多维指标(任务完成率/满意度/对话轮数/延迟/成本)→统计显著性(跑至少一周)→灰度放量(5-20-50-100%)→一键回滚。LLM输出有方差，样本量要够大。",
+    "key_points": [
+      "哈希分桶",
+      "多维指标",
+      "统计显著性",
+      "灰度放量",
+      "一键回滚"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "你的 Agent 需要支持多语言（中英文混合），你怎么处理？",
+    "tags": [
+      "多语言",
+      "Embedding",
+      "国际化"
+    ],
+    "reference_answer": "贯穿全链路：意图识别用多语言Embedding、检索用跨语言向量匹配或query翻译、生成用用户提问语言回答、工具调用注意编码、评测集覆盖中/英/混合。",
+    "key_points": [
+      "多语言Embedding",
+      "跨语言检索",
+      "生成语言跟随",
+      "编码处理",
+      "多语言评测"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "如果让你从零搭建一个企业级 Agent 平台，你的技术架构是什么样的？",
+    "tags": [
+      "架构",
+      "Agent平台",
+      "系统设计"
+    ],
+    "reference_answer": "五层：接入层(API Gateway/认证/限流/协议转换)→编排层(对话管理/意图路由/ReAct引擎/多Agent协作)→能力层(模型网关/工具中心/RAG引擎)→数据层(PostgreSQL/Milvus/Redis/对象存储)→平台层(Prompt管理/评测/监控/Grafana/管理后台)。核心原则：模型可插拔、工具可扩展、全链路可观测。",
+    "key_points": [
+      "五层架构",
+      "API Gateway",
+      "编排层(ReAct引擎)",
+      "模型网关",
+      "全链路可观测"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "模型网关（Model Gateway）你是怎么设计的？为什么需要它？",
+    "tags": [
+      "模型网关",
+      "架构",
+      "LLM"
+    ],
+    "reference_answer": "解决直接调API的痛点：统一OpenAI兼容接口适配多厂商→路由负载均衡(按任务/成本/延迟)→限流熔断(配额管理+自动切换备用)→结果缓存→可观测(记录模型/token/延迟/成本)→安全(脱敏+内容过滤)。",
+    "key_points": [
+      "统一API接口",
+      "多模型适配",
+      "路由和负载均衡",
+      "限流熔断",
+      "结果缓存"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Agent 的记忆和传统软件缓存有什么本质区别？设计时要注意什么？",
+    "tags": [
+      "Memory",
+      "缓存",
+      "Agent"
+    ],
+    "reference_answer": "缓存精确key匹配，记忆语义相似度检索。记忆有重要性分级和不同生命周期(工作/短期/长期)，需要合并更新而非覆盖，还要合规(用户可查看/修改/删除)。",
+    "key_points": [
+      "精确vs模糊检索",
+      "重要性分级",
+      "生命周期差异",
+      "合并更新vs覆盖",
+      "隐私合规"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "你的 Agent 在 ReAct 循环中陷入死循环了，线上怎么快速止血？长期怎么预防？",
+    "tags": [
+      "ReAct",
+      "死循环",
+      "故障处理"
+    ],
+    "reference_answer": "止血：max_steps硬限制+单步/全局超时+步数监控告警。预防：状态去重(检查历史步骤是否重复)+Prompt优化告知模型连试两次失败就换方法+评测集覆盖死循环case做回归。",
+    "key_points": [
+      "max_steps硬限制",
+      "单步+全局超时",
+      "步数监控告警",
+      "状态去重",
+      "Prompt防死循环"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "你怎么做 Agent 的灰度发布和版本管理？",
+    "tags": [
+      "灰度发布",
+      "版本管理",
+      "Agent"
+    ],
+    "reference_answer": "配置分离→完整配置打版本号→灰度放量(内测→1%→5%→20%→100%，每步观察24h)→一键回滚→变更审批(Code Review)。",
+    "key_points": [
+      "配置分离",
+      "版本化",
+      "灰度放量",
+      "一键回滚",
+      "变更审批"
+    ]
+  },
+  {
+    "category": "ai_ml",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "如何评估一个 RAG 系统的端到端效果？你会设计哪些指标？",
+    "tags": [
+      "RAG",
+      "评估",
+      "指标"
+    ],
+    "reference_answer": "三层指标：检索层(Recall@K/MRR/Precision@K)→生成层(Faithfulness忠实度/Relevance相关性/完整性)→端到端(任务完成率/对话轮数/延迟/满意度)。LLM-as-a-Judge打分+人工抽样。评测集覆盖简单事实查询、多跳推理、对比分析、不知道类问题。",
+    "key_points": [
+      "Recall@K/MRR",
+      "Faithfulness忠实度",
+      "LLM-as-a-Judge",
+      "评测集覆盖多场景",
+      "三层指标"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "线上服务突然出现大量超时告警，你的排查思路是什么？",
+    "tags": [
+      "故障排查",
+      "线上问题",
+      "超时"
+    ],
+    "reference_answer": "由外到内分层排查：看监控大盘确认影响范围→看基础设施(CPU/内存/IO/网络)→看JVM(GC日志/堆内存/内存泄漏)→看线程(jstack/死锁/线程池满)→看外部依赖(慢查询/Redis超时/下游服务)→看最近变更(回滚验证)。关键是先定范围再找瓶颈最后查变更。",
+    "key_points": [
+      "监控大盘定范围",
+      "JVM/GC排查",
+      "线程dump分析",
+      "外部依赖排查",
+      "变更关联"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "说说你对 JVM 内存模型的理解。线上遇到 OOM 你怎么处理？",
+    "tags": [
+      "JVM",
+      "OOM",
+      "内存"
+    ],
+    "reference_answer": "JVM运行时内存分堆(对象实例)、元空间(类信息)、虚拟机栈(局部变量)、本地方法栈、程序计数器。OOM处理：先根据报错类型定位(java heap/metaspace/stack)→扩内存或重启止血→保留dump→MAT分析dominator tree找GC Root引用链→定位泄漏点→加监控防复发。",
+    "key_points": [
+      "JVM内存分区",
+      "OOM类型判断",
+      "dump分析(MAT)",
+      "GC Root引用链",
+      "先止血再定位"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "G1 和 ZGC 的核心区别是什么？你在什么场景下会选择 ZGC？",
+    "tags": [
+      "JVM",
+      "GC",
+      "性能"
+    ],
+    "reference_answer": "G1分Region，Mixed GC同时回收年轻代和部分老年代，停顿可预测但大堆时仍有几十ms。ZGC用着色指针+读屏障，标记/重定位与用户线程并发，停顿<1ms且不随堆增长。选ZGC：对延迟极度敏感(金融/实时竞价)、大堆(几十GB-TB)、不能容忍>1ms停顿。不选：JDK<15、吞吐优先批处理、团队没调优经验。",
+    "key_points": [
+      "G1 Region+Mixed GC",
+      "ZGC着色指针+读屏障",
+      "停顿<1ms vs几十ms",
+      "大堆场景",
+      "吞吐vs延迟取舍"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "synchronized 和 ReentrantLock 你怎么选？锁升级的过程能讲讲吗？",
+    "tags": [
+      "Java",
+      "并发",
+      "锁"
+    ],
+    "reference_answer": "大多数场景synchronized够了，JDK6后性能优化很好。需要以下才选ReentrantLock：可中断等待(lockInterruptibly)、超时获取(tryLock)、公平锁、多Condition。锁升级：无锁→偏向锁(记录线程ID)→轻量级锁(CAS自旋)→重量级锁(OS mutex阻塞)。升级单向不降级。理解原理的意义：低竞争下synchronized开销很小，不必过早优化。",
+    "key_points": [
+      "synchronized vs ReentrantLock选型",
+      "偏向锁→轻量级→重量级",
+      "CAS自旋",
+      "单向升级",
+      "低竞争不用过早优化"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "线程池的核心参数有哪些？你怎么设置这些参数？线上出过什么问题？",
+    "tags": [
+      "Java",
+      "线程池",
+      "并发"
+    ],
+    "reference_answer": "七个参数：corePoolSize/maximumPoolSize/keepAliveTime/workQueue/threadFactory/handler。执行流程：核心线程→队列→非核心线程→拒绝策略。CPU密集≈核数+1，IO密集≈核数×2，但都要压测调整。线上踩坑：无界队列OOM(改有界+CallerRunsPolicy)、所有业务共用一个池(按业务隔离)、没设线程名(jstack排查困难)。",
+    "key_points": [
+      "七个核心参数",
+      "CPU密集vsIO密集",
+      "无界队列OOM",
+      "业务隔离线程池",
+      "线程命名"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Spring Boot 的自动装配原理是什么？如果让你自己写一个 Starter，你怎么设计？",
+    "tags": [
+      "Spring",
+      "自动装配",
+      "Starter"
+    ],
+    "reference_answer": "核心链路：@EnableAutoConfiguration→AutoConfigurationImportSelector→SpringFactoriesLoader读取AutoConfiguration.imports→@Conditional系列注解条件判断→@Bean创建注入。写Starter：拆autoconfigure+starter两模块→XxxAutoConfiguration加条件注解→XxxProperties绑定配置→AutoConfiguration.imports注册→写文档。",
+    "key_points": [
+      "AutoConfiguration.imports",
+      "@Conditional系列",
+      "XxxProperties配置绑定",
+      "拆两模块设计",
+      "条件注解覆盖机制"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Spring 事务失效的场景有哪些？你踩过哪个坑？",
+    "tags": [
+      "Spring",
+      "事务",
+      "坑"
+    ],
+    "reference_answer": "常见场景：非public方法(代理不到)、自调用(this调用不经过代理)、异常被catch吃掉、checked异常不rollback(需rollbackFor=Exception)、MyISAM不支持事务、传播行为配错。踩过的坑：自调用+异常被catch，排查两小时才发现事务根本没生效。",
+    "key_points": [
+      "非public方法",
+      "自调用(this)",
+      "异常被catch",
+      "rollbackFor",
+      "传播行为"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "分布式事务你用过哪些方案？各自的优缺点和适用场景？",
+    "tags": [
+      "分布式事务",
+      "2PC",
+      "TCC",
+      "Saga"
+    ],
+    "reference_answer": "2PC/XA强一致但性能差(金融转账)。TCC(Try-Confirm-Cancel)业务侵入大但性能好、需处理幂等。本地消息表/事务消息最终一致实现简单(下单后发短信)。Saga长事务多步补偿(旅行预订)。选型：能用最终一致不用强一致，能用本地消息不上TCC，高并发避免同步2PC。",
+    "key_points": [
+      "2PC强一致vs TCC性能",
+      "本地消息表最终一致",
+      "Saga多步补偿",
+      "幂等处理",
+      "选型原则"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Redis 做缓存时，缓存穿透、缓存击穿、缓存雪崩分别是什么？你怎么解决？",
+    "tags": [
+      "Redis",
+      "缓存",
+      "高并发"
+    ],
+    "reference_answer": "穿透(查不存在数据):缓存空值+布隆过滤器+参数校验。击穿(热点key过期):互斥锁(setnx)+逻辑过期(异步重建)+永不过期。雪崩(大量key同时过期或Redis宕机):随机偏移TTL+Redis集群高可用+多级缓存(Caffeine+Redis)+限流降级。",
+    "key_points": [
+      "穿透+布隆过滤器",
+      "击穿+互斥锁",
+      "雪崩+随机TTL",
+      "多级缓存",
+      "限流降级"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Redis 的持久化 RDB 和 AOF 怎么选？混合持久化是怎么回事？",
+    "tags": [
+      "Redis",
+      "持久化",
+      "RDB",
+      "AOF"
+    ],
+    "reference_answer": "RDB定时全量快照(fork+COW)恢复快但会丢最后快照后的数据。AOF记录每条写命令安全性高但文件大恢复慢。生产推荐两者都开。混合持久化(Redis 4.0+):AOF重写时前半段RDB格式存全量后半段AOF存增量，重启时快速加载RDB+回放少量AOF，兼顾速度和安全。aof-use-rdb-preamble yes。",
+    "key_points": [
+      "RDB全量快照",
+      "AOF写命令记录",
+      "混合持久化(RDB+AOF)",
+      "数据安全vs恢复速度",
+      "aof-use-rdb-preamble"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "MySQL 的索引为什么用 B+ 树而不是 B 树、哈希或红黑树？",
+    "tags": [
+      "MySQL",
+      "索引",
+      "B+树"
+    ],
+    "reference_answer": "B+树数据全在叶子节点，非叶子只存key，同样磁盘页存更多key树更矮IO更少。叶子节点双向链表串起来做范围查询只需顺序遍历。对比：B树数据分散非叶子回溯多；哈希O(1)等值但不支持范围和排序；红黑树二叉树太高每层一次IO。B+树矮胖+叶子链表=磁盘IO场景最优解。",
+    "key_points": [
+      "B+树vs B树(非叶子不存数据)",
+      "叶子链表(范围查询)",
+      "哈希不支持范围排序",
+      "红黑树太高IO多",
+      "磁盘IO场景最优"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "一条 SQL 查询很慢，你的排查和优化流程是什么？",
+    "tags": [
+      "MySQL",
+      "慢查询",
+      "优化"
+    ],
+    "reference_answer": "定位(慢查询日志/SkyWalking/Arthas)→EXPLAIN分析执行计划(看type/rows/Extra/filsort)→针对性优化(无索引加索引/函数操作导致不走索引/联合索引列顺序/覆盖索引减回表/filesort对齐索引)→架构层面(分库分表/读写分离/历史归档)→验证(再EXPLAIN+压测+上线监控)。",
+    "key_points": [
+      "慢查询日志",
+      "EXPLAIN分析",
+      "索引优化",
+      "覆盖索引",
+      "分库分表"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "MySQL 事务的隔离级别有哪些？InnoDB 默认用哪个？MVCC 是怎么实现的？",
+    "tags": [
+      "MySQL",
+      "事务",
+      "MVCC"
+    ],
+    "reference_answer": "四个级别：RU(脏读)→RC(不可重复读)→RR(InnoDB默认/通过MVCC+Next-Key Lock解决幻读)→Serializable(串行)。MVCC实现：每行trx_id+roll_pointer指向undo log旧版本链。事务开启生成ReadView(记录活跃事务ID)。读时沿undo log找对当前ReadView可见的版本。RC每次SELECT新ReadView，RR只第一次SELECT时生成。",
+    "key_points": [
+      "四种隔离级别",
+      "RR+MVCC+Next-Key Lock",
+      "trx_id+roll_pointer",
+      "ReadView快照",
+      "RC vs RR ReadView生成时机"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "分库分表后，跨分片查询和分布式 ID 怎么解决？",
+    "tags": [
+      "分库分表",
+      "分布式ID",
+      "ShardingSphere"
+    ],
+    "reference_answer": "跨分片查询：中间件聚合(ShardingSphere归并排序但复杂查询支持有限)+异构冗余(ES搜索/宽表报表)+业务层避免(查询带分片键)。分布式ID：雪花算法(Snowflake趋势递增注意时钟回拨)+数据库号段(Leaf-segment每次取一段减少DB访问)+避免UUID(无序InnoDB主键导致页分裂)。",
+    "key_points": [
+      "ShardingSphere聚合",
+      "异构冗余(ES/宽表)",
+      "雪花算法",
+      "数据库号段",
+      "UUID页分裂问题"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Kafka 怎么保证消息不丢？怎么保证消息不重复消费？",
+    "tags": [
+      "Kafka",
+      "消息队列",
+      "可靠性"
+    ],
+    "reference_answer": "不丢：生产端(acks=all+retries+幂等)→Broker端(replication≥3+min.insync≥2+禁止unclean选举)→消费端(手动commit消费完再提交)。不重复：Kafka只保证At Least Once，幂等靠消费端：唯一ID去重(Redis/DB查)、DB唯一约束(重复insert报错)、状态机单向流转。工程上用At Least Once+消费端幂等实现业务不重复。",
+    "key_points": [
+      "acks=all+幂等",
+      "三副本+手动commit",
+      "唯一ID去重",
+      "DB唯一约束",
+      "At Least Once+幂等"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "Spring Cloud 微服务之间调用超时了，你怎么做服务治理？",
+    "tags": [
+      "微服务",
+      "超时",
+      "服务治理"
+    ],
+    "reference_answer": "五维度治理：超时控制(每跳设合理超时+下游短于上游)→重试策略(幂等接口可重试+退避防风暴)→熔断降级(Sentinel/Resilience4j快速失败+兜底)→限流(网关+关键服务)→异步解耦(非实时链路走MQ)。全链路追踪(SkyWalking/Zipkin)是基础。",
+    "key_points": [
+      "超时链控制",
+      "重试+退避",
+      "Sentinel熔断降级",
+      "限流保护",
+      "全链路追踪"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "Java 里怎么做优雅停机？为什么需要它？",
+    "tags": [
+      "Java",
+      "优雅停机",
+      "Kubernetes"
+    ],
+    "reference_answer": "不优雅停机(直接kill -9)导致请求中断、连接泄漏、消息未消费、缓存未刷盘。流程：收SIGTERM→停止接新请求→等存量请求处理完(timeout 30s)→关资源(定时任务/MQ/线程池/连接池/Redis)→摘除服务注册。K8s配合preStop hook+terminationGracePeriodSeconds(60s)。Spring Boot 2.3+ server.shutdown=graceful。",
+    "key_points": [
+      "停止接新→等存量→关资源",
+      "K8s preStop hook",
+      "terminationGracePeriodSeconds",
+      "Spring graceful shutdown",
+      "先摘除再等待"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说说你对 Java 虚拟线程（Virtual Threads）的理解，它会取代线程池吗？",
+    "tags": [
+      "Java",
+      "虚拟线程",
+      "并发"
+    ],
+    "reference_answer": "JDK21引入的轻量级线程，几KB内存可百万级创建，IO等待时自动让出载体线程不阻塞。短期内不会取代：CPU密集无优势、需限流场景仍要线程池做并发控制、大量synchronized老代码会pin住载体线程需改ReentrantLock。IO密集场景(Web服务)会大量使用虚拟线程替代传统线程池。线程池作为并发控制工具不会消失。",
+    "key_points": [
+      "虚拟线程轻量(几KB)",
+      "IO密集场景优势",
+      "synchronized pin问题",
+      "不会完全取代线程池",
+      "并发控制仍需要"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "你的服务如何做链路追踪？TraceID 是怎么传递的？",
+    "tags": [
+      "链路追踪",
+      "TraceID",
+      "OpenTelemetry"
+    ],
+    "reference_answer": "每个请求分配全局唯一TraceID透传全链路。HTTP放Header(W3C Trace Context traceparent)。RPC放Attachment/Metadata。MQ放properties/headers。异步线程用TTL(TransmittableThreadLocal)。OpenTelemetry Java Agent自动注入(无侵入)拦截Spring MVC/HttpClient/JDBC/Redis/Kafka，Jaeger/SkyWalking存储，Grafana可视化。拿TraceID一搜整条链路耗时状态码全出来。",
+    "key_points": [
+      "TraceID透传(HTTP/RPC/MQ)",
+      "TTL解决异步线程",
+      "OpenTelemetry Agent",
+      "Jaeger/SkyWalking",
+      "Grafana可视化"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "Spring Boot 应用启动慢，你怎么排查和优化？",
+    "tags": [
+      "Spring Boot",
+      "启动优化",
+      "性能"
+    ],
+    "reference_answer": "先量化(startup timeline/JFR火焰图)。常见瓶颈和优化：自动装配扫描太宽(exclude不必要配置)→Bean初始化慢(@PostConstruct重操作改@Lazy或异步)→数据库连接池(减少初始连接/关闭启动schema验证)→类加载太多(检查不必要依赖/CDS缓存)→JIT编译(开发环境TieredStopAtLevel=1)→AOT编译(GraalVM Native Image启动秒级但牺牲动态性适合Serverless)。",
+    "key_points": [
+      "startup timeline量化",
+      "自动装配优化",
+      "@PostConstruct懒加载",
+      "类加载/CDS",
+      "AOT/GraalVM"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "Java 中 ConcurrentHashMap 在 JDK 7 和 JDK 8 的实现有什么区别？为什么改？",
+    "tags": [
+      "Java",
+      "ConcurrentHashMap",
+      "并发"
+    ],
+    "reference_answer": "JDK7:Segment分段锁(16个Segment各继承ReentrantLock)，并发度固定为Segment数量。JDK8:取消Segment改用Node数组+链表/红黑树+CAS+synchronized。synchronized锁每个桶头节点，粒度更细。链表≥8转红黑树O(logn)。扩容支持多线程协助(transferIndex分段分配)。size()用baseCount+CounterCell(LongAdder)避免全局锁。为什么改：Segment并发度有上限(默认16)，JDK8方案锁粒度到桶级别并发度高得多。",
+    "key_points": [
+      "Segment分段锁→synchronized桶锁",
+      "链表转红黑树",
+      "多线程协助扩容",
+      "LongAdder计数",
+      "锁粒度细化"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "你的 Java 服务怎么做健康检查？K8s 里的 liveness 和 readiness 探针怎么配？",
+    "tags": [
+      "Kubernetes",
+      "健康检查",
+      "Spring"
+    ],
+    "reference_answer": "Spring Boot Actuator /actuator/health + 自定义HealthIndicator检查DB/Redis/MQ。livenessProbe只检查进程存活不放外部依赖(防误重启)。readinessProbe检查完整依赖链(DB/Redis/MQ都ready且预热完成)。startupProbe给启动慢的应用缓冲。参数initialDelaySeconds/periodSeconds/failureThreshold根据实际调不要太激进。",
+    "key_points": [
+      "自定义HealthIndicator",
+      "liveness只看进程",
+      "readiness看依赖链",
+      "startupProbe缓冲",
+      "failureThreshold适度"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "knowledge",
+    "content": "说说你对 Java 内存屏障的理解。volatile 的底层是怎么保证可见性和有序性的？",
+    "tags": [
+      "Java",
+      "volatile",
+      "内存屏障"
+    ],
+    "reference_answer": "内存屏障是CPU层面控制重排序和可见性的指令。volatile写后插StoreStore+StoreLoad屏障，volatile读后插LoadLoad+LoadStore屏障。x86强内存模型StoreLoad对应lock前缀指令，其他屏障空操作。ARM弱内存模型都有实际指令开销。volatile适合一写多读(状态标志)，不能替代锁(不保证原子性i++不是原子的)。",
+    "key_points": [
+      "StoreLoad/StoreStore屏障",
+      "x86 lock前缀",
+      "ARM全部屏障",
+      "一写多读场景",
+      "不保证原子性"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "线上 Java 服务 CPU 突然飙到 100%，你怎么排查？",
+    "tags": [
+      "Java",
+      "CPU",
+      "故障排查"
+    ],
+    "reference_answer": "五步定位到代码行：top找高CPU进程→top -Hp找高CPU线程→TID转十六进制→jstack搜线程ID看调用栈。常见原因：死循环/无限递归、频繁Full GC(jstat看GC频率→jmap dump→MAT分析)、正则回溯、大对象序列化/加密、线程过多上下文切换(vmstat看cs)。",
+    "key_points": [
+      "top→top -Hp→十六进制→jstack",
+      "死循环定位",
+      "Full GC排查",
+      "正则回溯",
+      "上下文切换"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Spring 中 @Autowired 和 @Resource 有什么区别？循环依赖是怎么解决的？",
+    "tags": [
+      "Spring",
+      "@Autowired",
+      "循环依赖"
+    ],
+    "reference_answer": "@Autowired按类型(byType)可配合@Qualifier。@Resource按名称(byName)JSR-250标准。建议构造器注入(依赖明确不可变)。循环依赖用三级缓存解决：singletonObjects(完整Bean)→earlySingletonObjects(早期引用)→singletonFactories(ObjectFactory生成早期引用/处理AOP代理)。构造器注入的循环依赖解决不了。Spring Boot 2.6+默认禁止循环依赖。",
+    "key_points": [
+      "@Autowired byType vs @Resource byName",
+      "三级缓存",
+      "早期引用+ObjectFactory",
+      "构造器注入无法解决",
+      "Spring Boot 2.6+禁止"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "你在项目中怎么做接口幂等性设计？",
+    "tags": [
+      "幂等",
+      "接口设计",
+      "防重"
+    ],
+    "reference_answer": "方案按场景选：唯一索引/约束(数据库防重最可靠)→Token机制(Redis SETNX防表单重复提交)→状态机控制(单向流转重复请求返回当前状态)→去重表/Redis去重(requestId标识MQ消费)→乐观锁(version号UPDATE重复影响0行自然幂等)。幂等判断依据是业务唯一标识不是HTTP请求本身。",
+    "key_points": [
+      "唯一索引最可靠",
+      "Token+SETNX",
+      "状态机单向流转",
+      "Redis去重",
+      "乐观锁版本号"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "Java 里怎么做限流？令牌桶和滑动窗口有什么区别？",
+    "tags": [
+      "限流",
+      "Sentinel",
+      "算法"
+    ],
+    "reference_answer": "固定窗口(简单但边界突刺)→滑动窗口(平滑Sentinel默认用)→漏桶(匀速严格限速)→令牌桶(允许突发Guava RateLimiter)。单机用Guava RateLimiter/Sentinel，分布式用Redis+Lua(SETNX原子扣减)/Sentinel集群模式/网关层(Spring Cloud Gateway RequestRateLimiter)。网关粗粒度保护整体，服务层Sentinel细粒度保护单接口。",
+    "key_points": [
+      "令牌桶vs滑动窗口",
+      "Guava RateLimiter",
+      "Sentinel",
+      "Redis+Lua原子扣减",
+      "网关+服务双层限流"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "knowledge",
+    "content": "说说你对 Java 注解处理器（APT）的理解。Lombok 是怎么工作的？",
+    "tags": [
+      "Java",
+      "APT",
+      "Lombok"
+    ],
+    "reference_answer": "APT是编译期注解处理机制(Processor接口)。Lombok特殊：不走标准APT而是用JSR 269在AST生成后、字节码生成前直接修改AST(插入getter/setter/toString等方法节点)。所以Lombok生成的代码在class文件里是存在的，运行时不需要Lombok(除少数@NonNull等)。其他APT应用：MapStruct(对象映射)、Dagger(依赖注入代码生成)。优势：零运行时开销、类型安全。劣势：调试困难、IDE需插件。",
+    "key_points": [
+      "JSR 269修改AST",
+      "编译期代码生成",
+      "零运行时开销",
+      "MapStruct/Dagger对比",
+      "调试需IDE插件"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "medium",
+    "question_type": "practice",
+    "content": "你的 Java 项目怎么做依赖管理和版本冲突排查？",
+    "tags": [
+      "Maven",
+      "依赖管理",
+      "版本冲突"
+    ],
+    "reference_answer": "Maven仲裁：最短路径优先+先声明优先。实践：父POM/BOM统一锁版本→mvn dependency:tree看依赖树→mvn enforcer:enforce禁SNAPSHOT/重复依赖→exclusions排除传递依赖(小心ClassNotFoundException)→mvn versions:display-dependency-updates定期检查升级→OWASP/Snyk扫描CVE→关键依赖显式声明版本不依赖传递仲裁。",
+    "key_points": [
+      "BOM统一管理",
+      "dependency:tree",
+      "maven-enforcer-plugin",
+      "传递依赖排除",
+      "CVE安全扫描"
+    ]
+  },
+  {
+    "category": "backend",
+    "difficulty": "hard",
+    "question_type": "practice",
+    "content": "如果让你设计一个延迟任务系统（比如订单 30 分钟未支付自动取消），你怎么设计？",
+    "tags": [
+      "延迟任务",
+      "系统设计",
+      "RocketMQ"
+    ],
+    "reference_answer": "方案递进：JDK DelayQueue(简单单机不持久化)→时间轮(Netty HashedWheelTimer性能好单机)→数据库轮询(可靠但扫描量大需索引分片)→Redis ZSet(score存时间戳快但不保证可靠性)→MQ延迟消息(RocketMQ原生支持/RabbitMQ TTL+死信/rabbitmq-delayed-message-exchange)→专业调度平台(XXL-JOB/Elastic-Job)。生产级：RocketMQ延迟消息+数据库兜底+幂等消费。",
+    "key_points": [
+      "Redis ZSet方案",
+      "RocketMQ延迟消息",
+      "TTL+死信队列",
+      "XXL-JOB",
+      "幂等消费防重复"
+    ]
   }
 ]
