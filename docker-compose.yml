@@ -36,6 +36,9 @@ services:
     container_name: interview-api
     env_file:
       - .env
+    environment:
+      - POSTGRES_HOST=postgres
+      - REDIS_HOST=redis
     ports:
       - "8000:8000"
     volumes:
@@ -53,6 +56,9 @@ services:
     container_name: interview-celery-worker
     env_file:
       - .env
+    environment:
+      - POSTGRES_HOST=postgres
+      - REDIS_HOST=redis
     volumes:
       - .:/app
     depends_on:
