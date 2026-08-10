@@ -119,15 +119,6 @@ class LLMClient:
         logger.error("llm_chat_exhausted", error=str(last_exception))
         raise LLMClientError(f"LLM 调用失败，已重试 3 次: {last_exception}") from last_exception
 
-    async def chat_str(
-        self,
-        messages: list[dict[str, str]],
-        **kwargs: Any,
-    ) -> str:
-        """调用 chat 并直接返回文本内容。"""
-        response = await self.chat(messages, **kwargs)
-        return response.choices[0].message.content or ""
-
     async def close(self) -> None:
         """关闭 HTTP 连接池。"""
         await self.client.close()

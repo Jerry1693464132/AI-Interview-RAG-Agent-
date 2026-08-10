@@ -4,7 +4,6 @@
 API:
     POST   /interviews/                         — 创建面试
     GET    /interviews/                         — 面试列表
-    GET    /interviews/{id}                     — 面试详情
     POST   /interviews/{id}/generate-questions  — RAG 出题
     GET    /interviews/{id}/questions           — 查看题目
 """
@@ -71,15 +70,6 @@ async def list_interviews(
     stmt = stmt.offset(offset).limit(limit)
     result = await db.execute(stmt)
     return APIResponse(data=[_to_response(s) for s in result.scalars().all()])
-
-
-@router.get("/{interview_id}", response_model=APIResponse[InterviewSessionResponse])
-async def get_interview(interview_id: UUID, db: AsyncSession = Depends(get_db)):
-    session = await db.get(InterviewSession, interview_id)
-    if not session:
-        raise NotFoundError("InterviewSession", interview_id)
-    return APIResponse(data=_to_response(session))
-
 
 # ---- RAG 出题 ----
 

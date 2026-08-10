@@ -14,7 +14,7 @@ from functools import lru_cache
 from typing import Optional
 
 from dotenv import load_dotenv
-from pydantic import Field, SecretStr
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # 加载 .env 到 os.environ，所有子 Settings 自动读取

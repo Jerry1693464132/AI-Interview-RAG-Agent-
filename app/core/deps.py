@@ -3,9 +3,7 @@
 
 提供的依赖:
     get_db          → AsyncSession     (数据库会话)
-    get_llm_client  → LLMClient        (DeepSeek 客户端单例)
     get_redis       → redis.Redis      (Redis 连接)
-    get_settings    → Settings         (配置单例)
 """
 
 from typing import AsyncGenerator
@@ -13,9 +11,9 @@ from typing import AsyncGenerator
 import redis.asyncio as aioredis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import Settings, get_settings
+from app.core.config import get_settings
 from app.core.database import async_session_factory
-from app.core.llm_client import LLMClient, get_llm_client
+from app.core.llm_client import get_llm_client
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

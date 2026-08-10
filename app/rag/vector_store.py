@@ -23,7 +23,6 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.question import QuestionBank
-from app.rag.embeddings import EMBEDDING_DIMENSION
 
 logger = structlog.get_logger(__name__)
 
@@ -50,54 +49,6 @@ class VectorStore:
         self.session = session
 
     # ---- 写入操作 ----
-
-    async def upsert(
-        self,
-        content: str,
-        embedding: list[float],
-        *,
-        question_id: Optional[uuid.UUID] = None,
-        category: str = "general",
-        subcategory: Optional[str] = None,
-        difficulty: str = "medium",
-        question_type: str = "technical",
-        tags: Optional[list[str]] = None,
-        reference_answer: Optional[str] = None,
-        key_points: Optional[list[str]] = None,
-        source: Optional[str] = None,
-    ) -> QuestionBank:
-        """插入或更新一条题库记录。"""
-        if question_id:
-            record = await self.session.get(QuestionBank, question_id)
-            if record is None:
-                raise ValueError(f"QuestionBank {question_id} not found")
-            record.content = content
-            record.embedding = embedding
-            record.category = category
-            record.subcategory = subcategory
-            record.difficulty = difficulty
-            record.question_type = question_type
-            record.tags = tags or []
-            record.reference_answer = reference_answer
-            record.key_points = key_points or []
-            record.source = source
-        else:
-            record = QuestionBank(
-                content=content,
-                embedding=embedding,
-                category=category,
-                subcategory=subcategory,
-                difficulty=difficulty,
-                question_type=question_type,
-                tags=tags or [],
-                reference_answer=reference_answer,
-                key_points=key_points or [],
-                source=source,
-            )
-            self.session.add(record)
-
-        await self.session.flush()
-        return record
 
     async def upsert_batch(
         self,
@@ -202,30 +153,3 @@ class VectorStore:
             )
             for row in rows
         ]
-
-    async def count(self) -> int:
-        """获取已向量化的记录数。"""
-        result = await self.session.execute(
-            text("SELECT COUNT(*) FROM question_bank WHERE embedding IS NOT NULL")
-        )
-        return result.scalar() or 0
-
-    # ---- 删除 ----
-
-    async def delete(self, question_id: uuid.UUID) -> bool:
-        """删除一条题库记录。"""
-        record = await self.session.get(QuestionBank, question_id)
-        if record is None:
-            return False
-        await self.session.delete(record)
-        await self.session.flush()
-        return True
-
-    async def delete_by_ids(self, ids: list[uuid.UUID]) -> int:
-        """批量删除。"""
-        result = await self.session.execute(
-            text("DELETE FROM question_bank WHERE id = ANY(:ids)"),
-            {"ids": ids},
-        )
-        await self.session.flush()
-        return result.rowcount or 0
