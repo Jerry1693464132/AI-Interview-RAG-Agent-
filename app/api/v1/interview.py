@@ -43,10 +43,14 @@ async def create_interview(
         resume_id=request.resume_id,
     )
     if request.resume_id:
-        from app.models.resume import CandidateProfile, Resume
-        resume = await db.get(Resume, request.resume_id)
-        if resume and resume.profile:
-            session.profile_id = resume.profile.id
+        from app.models.resume import CandidateProfile
+        from sqlalchemy import select
+        result = await db.execute(
+            select(CandidateProfile).where(CandidateProfile.resume_id == request.resume_id)
+        )
+        profile = result.scalar()
+        if profile:
+            session.profile_id = profile.id
 
     db.add(session)
     await db.flush()

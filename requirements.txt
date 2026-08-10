@@ -26,6 +26,10 @@ langchain-community>=0.3.0
 pydantic>=2.5.0
 pydantic-settings>=2.0.0
 
+# PDF Parsing
+pdfplumber>=0.11.0
+PyPDF2>=3.0.0
+
 # Prompt Management
 pyyaml>=6.0
 
