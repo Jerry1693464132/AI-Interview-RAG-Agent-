@@ -89,6 +89,9 @@
   📄 上传简历 PDF
         │
         ▼
+  ⚡ Celery 异步解析（秒回，前端轮询进度）
+        │
+        ▼
   🔬 AI 深度分析
   ├─ 核心技能 + 熟练度 + 实战年限
   ├─ 候选人优势领域
@@ -231,7 +234,9 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 | 方法 | 端点 | 说明 |
 |------|------|------|
-| `POST` | `/api/v1/resumes/upload-sync` | 上传简历 PDF，同步解析并返回画像 |
+| `POST` | `/api/v1/resumes/upload` | 上传简历 PDF，触发 Celery 异步解析（秒回） |
+| `GET` | `/api/v1/resumes/{id}` | 查询解析状态（前端轮询，完成后返回画像） |
+| `POST` | `/api/v1/resumes/upload-sync` | 上传并同步解析（Mock 模式兜底） |
 | `POST` | `/api/v1/interviews/` | 创建面试会话 |
 | `GET` | `/api/v1/interviews/` | 列出历史面试记录 |
 | `POST` | `/api/v1/interviews/{id}/generate-questions` | 触发 RAG 增强出题 |
@@ -255,7 +260,7 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 │   │   ├── llm_client.py          ← DeepSeek API 封装（重试+日志）
 │   │   └── exceptions.py          ← 统一异常体系
 │   ├── api/v1/                    ← 路由层
-│   │   ├── resume.py              ← 简历上传/同步解析
+│   │   ├── resume.py              ← 简历异步上传/状态轮询/同步兜底
 │   │   ├── interview.py           ← 面试会话 + RAG 出题
 │   │   └── questions.py           ← 题库混合检索
 │   ├── services/                  ← 业务逻辑
@@ -269,7 +274,7 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 │   │   └── indexer.py             ← 题库批量索引
 │   ├── models/                    ← ORM 数据库表（5 张表）
 │   ├── schemas/                   ← Pydantic 请求/响应模型
-│   ├── tasks/                     ← Celery 异步任务
+│   ├── tasks/                     ← Celery 异步任务（简历解析后台执行）
 │   ├── prompts/                   ← Prompt 工具
 │   ├── data/                      ← 种子题库（391 题 JSON）
 │   └── static/                    ← 前端 SPA

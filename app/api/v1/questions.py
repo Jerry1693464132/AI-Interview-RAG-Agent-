@@ -12,12 +12,12 @@ from app.core.deps import get_db
 from app.rag.embeddings import get_embedding_client
 from app.rag.vector_store import VectorStore
 from app.schemas.common import APIResponse
-from app.schemas.question import QuestionSearchRequest
+from app.schemas.question import QuestionSearchRequest, QuestionSearchResult
 
 router = APIRouter()
 
 
-@router.post("/search", response_model=APIResponse[list[dict]])
+@router.post("/search", response_model=APIResponse[list[QuestionSearchResult]])
 async def search_questions(
     request: QuestionSearchRequest,
     db: AsyncSession = Depends(get_db),
