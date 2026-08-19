@@ -130,6 +130,9 @@ class CandidateProfile(Base, UUIDMixin, TimestampMixin):
     target_industry: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     target_level: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # junior/mid/senior/staff
 
+    # AI 深度分析完整结果（core_skills/strengths/risk_areas/analysis_summary/interview_strategy）
+    analysis_result: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+
     # 关联
     resume: Mapped["Resume"] = relationship("Resume", back_populates="profile")
 

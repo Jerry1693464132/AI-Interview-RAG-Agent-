@@ -43,6 +43,8 @@
   .text-muted{color:var(--text-muted);font-size:13px}
   .empty-state{text-align:center;padding:40px;color:var(--text-muted)}
   .empty-state .icon{font-size:48px;margin-bottom:12px}
+  .spinner{width:48px;height:48px;margin:0 auto;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
   .file-upload{border:2px dashed var(--border);border-radius:var(--radius);padding:40px;text-align:center;cursor:pointer;transition:all .2s}
   .file-upload:hover{border-color:var(--primary);background:rgba(99,102,241,.05)}
   .file-upload .icon{font-size:40px;margin-bottom:8px}
@@ -149,86 +151,128 @@ async function handleFile(file){
 
   const status=document.getElementById('uploadStatus');
   status.classList.remove('hidden');
-  status.innerHTML='<div class="empty-state"><p>⏳ 正在解析简历，提取候选人画像（约 15-30 秒）...</p></div>';
   document.getElementById('dropZone').classList.add('hidden');
   document.getElementById('btnReset').classList.add('hidden');
 
+  // 步骤轮播文案
+  const steps=['📄 正在解析简历 PDF...','🧠 DeepSeek 深度分析技能与经历...','🔍 提取候选人画像与面试策略...'];
+  let stepIdx=0;
+  const stepTimer=setInterval(()=>{stepIdx=(stepIdx+1)%steps.length;document.getElementById('pollText').textContent=steps[stepIdx]},4000);
+
+  status.innerHTML=`
+    <div class="empty-state">
+      <div class="spinner"></div>
+      <p id="pollText" style="margin-top:12px">📄 正在解析简历 PDF...</p>
+      <p class="text-muted" style="margin-top:6px">已提交后台处理，无需等待本页刷新</p>
+    </div>`;
+
   try{
+    // 1. 异步上传（秒回）
     const form=new FormData();
     form.append('file',file);
-    const resp=await fetch(`${API}/api/v1/resumes/upload-sync`,{method:'POST',body:form});
+    const resp=await fetch(`${API}/api/v1/resumes/upload`,{method:'POST',body:form});
     const result=await resp.json();
 
-    if(resp.ok && result.data){
-      const p=result.data;
-      currentResumeId=p.resume_id;
-      currentProfile=p;
+    if(!resp.ok||!result.data){throw new Error(result.message||'上传失败')}
+    const resumeId=result.data.resume_id;
+    currentResumeId=resumeId;
 
-      // 构建技能标签
-      const levelClass={'expert':'tag-expert','advanced':'tag-advanced','intermediate':'tag-mid','novice':'tag-novice'};
-      const coreSkills=(p.core_skills||[]);
-      const skillsHtml=coreSkills.length>0
-        ? coreSkills.map(s=>`<span class="tag ${levelClass[s.level]||'tag-novice'}">${s.skill} (${s.proficiency||s.level||'?'})</span>`).join(' ')
-        : (p.skills||[]).map(s=>`<span class="tag tag-skill">${s}</span>`).join(' ') || '<span class="text-muted">未识别</span>';
+    // 2. 轮询状态（每 2 秒）
+    let profile=null;
+    for(let i=0;i<90;i++){  // 最多 3 分钟
+      await new Promise(r=>setTimeout(r,2000));
+      const pr=await fetch(`${API}/api/v1/resumes/${resumeId}`);
+      const pdata=await pr.json();
+      const s=pdata.data;
+      if(!s)continue;
 
-      // 院校信息
-      const schools=p.education_summary?.schools||p.education_summary?.top_schools||[];
-      const degree=p.education_summary?.highest_degree||'';
-      const eduLine=schools.length>0 ? `${schools[0]}${degree?' · '+degree:''}` : '未知';
-
-      // 风险点
-      const risks=(p.risk_areas||[]);
-      const risksHtml=risks.length>0
-        ? risks.map(r=>`<div style="padding:6px 0;border-bottom:1px solid rgba(239,68,68,.1)"><span style="color:#f87171;margin-right:6px">⚠</span> ${r}</div>`).join('')
-        : '<span class="text-muted">未识别明显风险</span>';
-
-      // 优势
-      const strengths=(p.strengths||[]);
-      const strengthsHtml=strengths.length>0
-        ? strengths.map(s=>`<span class="tag tag-expert">💪 ${s}</span>`).join(' ')
-        : '<span class="text-muted">未识别</span>';
-
-      status.innerHTML=`
-        <div style="background:rgba(16,185,129,.1);border:1px solid var(--success);border-radius:var(--radius);padding:20px">
-          <p style="font-weight:700;color:var(--success);font-size:16px;margin-bottom:16px">✅ 简历深度分析完成</p>
-
-          <div class="profile-grid" style="margin-bottom:16px">
-            <div class="profile-item"><div class="label">目标岗位</div><div class="value">${p.target_role||'未识别'}</div></div>
-            <div class="profile-item"><div class="label">院校</div><div class="value">${eduLine}</div></div>
-            <div class="profile-item"><div class="label">公司</div><div class="value">${(p.work_summary?.total_companies||0)} 家</div></div>
-            <div class="profile-item"><div class="label">最近职位</div><div class="value">${p.work_summary?.latest_title||'未知'}</div></div>
-          </div>
-
-          <div class="profile-item" style="margin-bottom:12px"><div class="label">核心技能评估</div><div style="margin-top:6px">${skillsHtml}</div></div>
-
-          ${p.analysis_summary ? `<div class="profile-item" style="margin-bottom:12px"><div class="label">综合评估</div><div style="margin-top:4px;line-height:1.7;white-space:pre-wrap">${p.analysis_summary}</div></div>` : ''}
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-            <div class="profile-item"><div class="label">优势</div><div style="margin-top:6px">${strengthsHtml}</div></div>
-            <div class="profile-item"><div class="label">需验证的风险点</div><div style="margin-top:6px">${risksHtml}</div></div>
-          </div>
-
-          ${p.interview_strategy ? `<div class="profile-item"><div class="label">面试策略建议</div><div style="margin-top:4px;line-height:1.7;white-space:pre-wrap">${p.interview_strategy}</div></div>` : ''}
-        </div>`;
-
-      document.getElementById('btnReset').classList.remove('hidden');
-      document.getElementById('card-job').style.opacity='1';
-      document.getElementById('card-job').style.pointerEvents='auto';
-      document.getElementById('btnGenerate').disabled=false;
-      updateStep(2);
-
-      // 自动填充岗位
-      if(p.target_role&&!document.getElementById('jobTitle').value){
-        document.getElementById('jobTitle').value=p.target_role;
+      if(s.status==='completed'){
+        profile=s;break;
       }
-      toast('简历解析完成！请设置岗位信息后生成题目');
-    }else{
-      status.innerHTML=`<div class="empty-state" style="color:var(--danger)"><p>❌ 解析失败：${result.message||'未知错误'}</p></div>`;
-      document.getElementById('btnReset').classList.remove('hidden');
+      if(s.status==='failed'){
+        clearInterval(stepTimer);
+        status.innerHTML=`<div class="empty-state" style="color:var(--danger)"><p>❌ 解析失败：${s.error_message||'未知错误'}</p></div>`;
+        document.getElementById('btnReset').classList.remove('hidden');
+        return;
+      }
     }
+    clearInterval(stepTimer);
+
+    if(!profile){
+      status.innerHTML=`<div class="empty-state" style="color:var(--danger)"><p>⏱️ 解析超时，请重试</p></div>`;
+      document.getElementById('btnReset').classList.remove('hidden');
+      return;
+    }
+
+    renderProfile(profile);
+    toast('简历解析完成！请设置岗位信息后生成题目');
   }catch(e){
+    clearInterval(stepTimer);
     status.innerHTML=`<div class="empty-state" style="color:var(--danger)"><p>❌ 网络错误：${e.message}</p></div>`;
     document.getElementById('btnReset').classList.remove('hidden');
+  }
+}
+
+function renderProfile(p){
+  const status=document.getElementById('uploadStatus');
+  currentProfile=p;
+
+  // 构建技能标签
+  const levelClass={'expert':'tag-expert','advanced':'tag-advanced','intermediate':'tag-mid','novice':'tag-novice'};
+  const coreSkills=(p.core_skills||[]);
+  const skillsHtml=coreSkills.length>0
+    ? coreSkills.map(s=>`<span class="tag ${levelClass[s.level]||'tag-novice'}">${s.skill} (${s.proficiency||s.level||'?'})</span>`).join(' ')
+    : (p.skills||[]).map(s=>`<span class="tag tag-skill">${s}</span>`).join(' ') || '<span class="text-muted">未识别</span>';
+
+  // 院校信息
+  const schools=p.education_summary?.schools||p.education_summary?.top_schools||[];
+  const degree=p.education_summary?.highest_degree||'';
+  const eduLine=schools.length>0 ? `${schools[0]}${degree?' · '+degree:''}` : '未知';
+
+  // 风险点
+  const risks=(p.risk_areas||[]);
+  const risksHtml=risks.length>0
+    ? risks.map(r=>`<div style="padding:6px 0;border-bottom:1px solid rgba(239,68,68,.1)"><span style="color:#f87171;margin-right:6px">⚠</span> ${r}</div>`).join('')
+    : '<span class="text-muted">未识别明显风险</span>';
+
+  // 优势
+  const strengths=(p.strengths||[]);
+  const strengthsHtml=strengths.length>0
+    ? strengths.map(s=>`<span class="tag tag-expert">💪 ${s}</span>`).join(' ')
+    : '<span class="text-muted">未识别</span>';
+
+  status.innerHTML=`
+    <div style="background:rgba(16,185,129,.1);border:1px solid var(--success);border-radius:var(--radius);padding:20px">
+      <p style="font-weight:700;color:var(--success);font-size:16px;margin-bottom:16px">✅ 简历深度分析完成</p>
+
+      <div class="profile-grid" style="margin-bottom:16px">
+        <div class="profile-item"><div class="label">目标岗位</div><div class="value">${p.target_role||'未识别'}</div></div>
+        <div class="profile-item"><div class="label">院校</div><div class="value">${eduLine}</div></div>
+        <div class="profile-item"><div class="label">公司</div><div class="value">${(p.work_summary?.total_companies||0)} 家</div></div>
+        <div class="profile-item"><div class="label">最近职位</div><div class="value">${p.work_summary?.latest_title||'未知'}</div></div>
+      </div>
+
+      <div class="profile-item" style="margin-bottom:12px"><div class="label">核心技能评估</div><div style="margin-top:6px">${skillsHtml}</div></div>
+
+      ${p.analysis_summary ? `<div class="profile-item" style="margin-bottom:12px"><div class="label">综合评估</div><div style="margin-top:4px;line-height:1.7;white-space:pre-wrap">${p.analysis_summary}</div></div>` : ''}
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="profile-item"><div class="label">优势</div><div style="margin-top:6px">${strengthsHtml}</div></div>
+        <div class="profile-item"><div class="label">需验证的风险点</div><div style="margin-top:6px">${risksHtml}</div></div>
+      </div>
+
+      ${p.interview_strategy ? `<div class="profile-item"><div class="label">面试策略建议</div><div style="margin-top:4px;line-height:1.7;white-space:pre-wrap">${p.interview_strategy}</div></div>` : ''}
+    </div>`;
+
+  document.getElementById('btnReset').classList.remove('hidden');
+  document.getElementById('card-job').style.opacity='1';
+  document.getElementById('card-job').style.pointerEvents='auto';
+  document.getElementById('btnGenerate').disabled=false;
+  updateStep(2);
+
+  // 自动填充岗位
+  if(p.target_role&&!document.getElementById('jobTitle').value){
+    document.getElementById('jobTitle').value=p.target_role;
   }
 }
 

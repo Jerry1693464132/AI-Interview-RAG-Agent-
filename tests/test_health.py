@@ -34,7 +34,9 @@ async def test_openapi_schema(async_client: AsyncClient):
     schema = response.json()
     paths = schema["paths"]
     assert "/health" in paths
+    assert "/api/v1/resumes/upload" in paths
     assert "/api/v1/resumes/upload-sync" in paths
+    assert "/api/v1/resumes/{resume_id}" in paths
     assert "/api/v1/interviews/" in paths
     assert "/api/v1/interviews/{interview_id}/generate-questions" in paths
     assert "/api/v1/interviews/{interview_id}/questions" in paths

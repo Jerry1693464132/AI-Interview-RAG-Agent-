@@ -27,7 +27,6 @@ def parse_and_extract(self, resume_id: str, file_path: str) -> dict:
     import asyncio
 
     async def _run():
-        from sqlalchemy import select
         from app.core.database import async_session_factory
         from app.core.llm_client import get_llm_client
         from app.models.resume import CandidateProfile, Resume, ResumeStatus
@@ -49,7 +48,7 @@ def parse_and_extract(self, resume_id: str, file_path: str) -> dict:
                 parser = ResumeParser(llm)
                 structured = await parser.parse(file_path)
                 resume.structured_data = structured
-                resume.raw_text = structured.get("skills", "")
+                resume.raw_text = structured.get("raw_text", str(structured))
 
                 # Step 2: 提取画像
                 extractor = ProfileExtractor(llm)
@@ -61,13 +60,14 @@ def parse_and_extract(self, resume_id: str, file_path: str) -> dict:
                     email=profile_data.get("email"),
                     phone=profile_data.get("phone"),
                     skills=profile_data.get("skills", []),
-                    skill_levels=profile_data.get("skill_levels", {}),
-                    years_of_experience=profile_data.get("years_of_experience"),
+                    skill_levels={s["skill"]: s["level"] for s in profile_data.get("core_skills", [])},
+                    years_of_experience=profile_data.get("years_of_experience") or 0,
                     education_summary=profile_data.get("education_summary"),
                     work_summary=profile_data.get("work_summary"),
                     target_role=profile_data.get("target_role"),
                     target_industry=profile_data.get("target_industry"),
                     target_level=profile_data.get("target_level"),
+                    analysis_result=profile_data,
                 )
                 db.add(profile)
                 resume.status = ResumeStatus.COMPLETED
