@@ -32,6 +32,41 @@ settings = get_settings()
 
 # ---- Lifespan ----
 
+async def _init_database() -> None:
+    """真实模式数据库自动初始化 — pgvector 扩展 + 建表 + 题库为空时自动导入。"""
+    import json
+
+    from sqlalchemy import text
+
+    from app.core.database import async_session_factory, engine
+    from app.models import Base
+    from app.rag.embeddings import get_embedding_client
+    from app.rag.indexer import QuestionBankIndexer
+    from app.rag.vector_store import VectorStore
+
+    # 1. 启用 pgvector 扩展
+    async with engine.begin() as conn:
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+
+    # 2. 建缺失的表（已存在的跳过）
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    # 3. 题库为空时自动导入种子数据
+    async with async_session_factory() as db:
+        result = await db.execute(text("SELECT COUNT(*) FROM question_bank"))
+        if (result.scalar() or 0) == 0:
+            seed_file = Path(__file__).parent / "data" / "seed_questions.json"
+            with open(seed_file, "r", encoding="utf-8") as f:
+                questions = json.load(f)
+            indexer = QuestionBankIndexer(get_embedding_client(), VectorStore(db))
+            await indexer.index_questions(questions)
+            await db.commit()  # 关键：flush 只写暂存，必须 commit 才落库
+            logger.info("seed_data_loaded", count=len(questions))
+        else:
+            logger.info("seed_data_skipped", note="题库非空，跳过导入")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """应用生命周期管理 — 启动时预热连接，关闭时清理。"""
@@ -44,6 +79,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info("redis_connected")
     except Exception:
         logger.warning("redis_unavailable")
+
+    # 真实模式：数据库自动初始化
+    if not settings.app.USE_MOCK_DB:
+        try:
+            await _init_database()
+            logger.info("database_initialized")
+        except Exception as exc:
+            logger.error("database_init_failed", error=str(exc))
 
     # Mock 模式自动加载种子题库
     if settings.app.USE_MOCK_DB:

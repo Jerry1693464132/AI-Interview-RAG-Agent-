@@ -180,17 +180,13 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 cp .env.example .env
 # 编辑 .env：USE_MOCK_DB=false，填入 DEEPSEEK_API_KEY 和 DASHSCOPE_API_KEY
 
-# 2. 一键启动
+# 2. 一键启动（自动完成：pgvector 扩展 → 建表 → 题库导入）
 docker compose up -d
 
-# 3. 初始化数据库表
-docker compose exec api python -c "import asyncio;from app.core.database import engine;from app.models import Base;asyncio.run((lambda: (lambda conn: conn.run_sync(Base.metadata.create_all)))((lambda e: e.begin())(engine)))"
-
-# 4. 导入种子题库
-docker compose exec api python -c "import asyncio,json;from app.core.database import async_session_factory;from app.rag.embeddings import EmbeddingClient;from app.rag.vector_store import VectorStore;from app.rag.indexer import QuestionBankIndexer;async def seed(): questions=json.load(open('app/data/seed_questions.json','r',encoding='utf-8')); async with async_session_factory() as s: await QuestionBankIndexer(EmbeddingClient(),VectorStore(s)).index_questions(questions); print('Done:',len(questions)); asyncio.run(seed())"
-
-# 5. 访问 http://localhost:8000/
+# 3. 访问 http://localhost:8000/
 ```
+
+> 💡 应用启动时自动初始化数据库：启用 pgvector 扩展、创建缺失的表、题库为空时自动导入 391 道种子题。无需任何手动步骤。
 
 ### 方式三：本地开发
 
@@ -202,9 +198,7 @@ USE_MOCK_DB=false
 POSTGRES_HOST=localhost
 REDIS_HOST=localhost
 
-# 2. 创建表 + 导入题库（同 Docker 方式步骤 3-4）
-
-# 3. 启动
+# 2. 启动（数据库初始化同样自动完成）
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
